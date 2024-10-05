@@ -454,7 +454,7 @@ async def ntr_wife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQ信息
     load_ntr_statuses()
     group_id = str(ev.group_id)
-    if not ntr_statuses.get(group_id, False):
+    if not ntr_statuses.get(group_id, True):
         await bot.send(ev, '牛老婆功能未开启！', at_sender=False)
         return
     user_id = ev.user_id
@@ -564,7 +564,7 @@ async def switch_ntr(bot, ev: CQEvent):
     group_id = str(ev.group_id)
     
     # 取反群的NTR状态
-    ntr_statuses[group_id] = not ntr_statuses.get(group_id, False)
+    ntr_statuses[group_id] = not ntr_statuses.get(group_id, True)
 
     # 保存到文件
     save_ntr_statuses()
