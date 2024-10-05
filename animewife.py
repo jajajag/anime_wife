@@ -668,7 +668,7 @@ async def wife_stats(bot, ev: CQEvent):
     result = cursor.fetchone()
     most_gacha_wife = result[0] if result else '?'
     # 5. Most wife from gacha count
-    most_gacha_wife_count = most_gacha_wife[1] if result else 0
+    most_gacha_wife_count = result[1] if result else 0
 
     # 6. #ntr
     cursor.execute("""
@@ -687,7 +687,7 @@ async def wife_stats(bot, ev: CQEvent):
     result = cursor.fetchone()
     most_ntr_wife = result[0] if result else '?'
     # 8. Most ntr wife count
-    most_ntr_wife_count = most_ntr_wife[1] if result else 0
+    most_ntr_wife_count = result[1] if result else 0
 
     # 9. Most ntr user
     cursor.execute("""
@@ -702,9 +702,9 @@ async def wife_stats(bot, ev: CQEvent):
         most_ntr_user = member_info['card'] or member_info['nickname'] \
             or member_info['user_id'] or '未找到对方id'
     else:
-        most_ntr_user_count = '?'
+        most_ntr_user = '?'
     # 10. Most ntr user count
-    most_ntr_user_count = most_ntr_user[1] if result else 0
+    most_ntr_user_count = result[1] if result else 0
 
     # 11. Most ntred wife
     cursor.execute("""
