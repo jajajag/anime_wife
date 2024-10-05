@@ -779,15 +779,15 @@ async def wife_stats(bot, ev: CQEvent):
     conn.close()
 
     ret = f'@{user_name}的老婆档案：\n'
-    ret += f'- 总计解锁的老婆：{collected_count}/{total_count}位\n'
-    ret += f'- 总计抽过的老婆：{gacha_count}次\n'
+    ret += f'- 总共解锁的老婆：{collected_count}/{total_count}位\n'
+    ret += f'- 总共抽过的老婆：{gacha_count}次\n'
     ret += f'- 抽到最多的老婆：{most_gacha_wife}({most_gacha_wife_count}次)\n'
-    ret += f'- 总计牛过的老婆：{ntr_count}次\n'
+    ret += f'- 总共牛过的老婆：{ntr_count}次\n'
     ret += f'- 最喜欢牛的老婆：{most_ntr_wife}({most_ntr_wife_count}次)\n'
     ret += f'- 最喜欢牛的群友：@{most_ntr_user}({most_ntr_user_count}次)\n'
     ret += f'- 被牛最多的老婆：{most_ntred_wife}({most_ntred_wife_count}次)\n'
     ret += f'- 被牛最多的群友：@{most_ntred_user}({most_ntred_user_count}次)\n'
-    ret += f'- 总计换过的老婆：{exchange_count}次\n'
+    ret += f'- 总共换过的老婆：{exchange_count}次\n'
     ret += f'- 最喜欢换的老婆：{most_exchange_wife}({most_exchange_wife_count}次)\n'
     ret += f'- 最喜欢换的群友：@{most_exchange_user}({most_exchange_user_count}次)'
     await bot.send(ev, ret, at_sender=False)
