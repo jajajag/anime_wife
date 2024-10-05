@@ -84,17 +84,6 @@ ntr_possibility = 0.5
 
 sv_help = '''
 [抽老婆] 看看今天的二次元老婆是谁
-[添加老婆+人物名称+图片] 群管理员每天可以添加一次人物
-※为防止bot被封号和数据污染请勿上传太涩与功能无关的图片※
-[交换老婆] @某人 + 交换老婆
-[牛老婆] 50%概率牛到别人老婆(2次/日)
-[查老婆] 加@某人可以查别人老婆
-[重置牛老婆] 加@某人可以重置别人牛的次数
-[切换ntr开关状态]
-'''.strip()
-
-sv_help = '''
-[抽老婆] 看看今天的二次元老婆是谁
 [交换老婆] @某人 + 交换老婆
 [牛老婆] 50%概率牛到别人老婆(1次/日)
 [查老婆] 加@某人可以查别人老婆
@@ -112,6 +101,9 @@ sv = Service(
     help_ = sv_help #帮助说明
     )
 
+@sv.on_fullmatch('抽老婆帮助', only_to_me=False)
+async def send_wifehelp(bot, ev):
+    await bot.send(ev, f'{sv_help}')
 
 @sv.on_fullmatch('抽老婆')
 async def animewife(bot, ev: CQEvent):
