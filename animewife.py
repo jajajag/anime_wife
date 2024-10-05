@@ -136,6 +136,9 @@ async def animewife(bot, ev: CQEvent):
                     del config[record_id]
         # 随机选择一张老婆的图片，用于获取图片名
         wife_name = random.choice(os.listdir(imgpath))
+        # JAG: Gacha wife history
+        write_db_history('gacha', 
+                         user_id, 0, groupid, wife_name.split('.')[0], today)
     # 分割文件名和扩展名，只取图片名返回给用户
     name = wife_name.split('.')
     # 生成返回结果
@@ -148,8 +151,6 @@ async def animewife(bot, ev: CQEvent):
         hoshino.logger.error(f'读取老婆图片时发生错误{type(e)}')
     # 将选择的老婆信息写入群组配置
     write_group_config(groupid,user_id,wife_name,today,config)
-    # JAG: Gacha wife history
-    write_db_history('gacha', user_id, 0, groupid, name[0], today)
     # 发送消息
     await bot.send(ev,result,at_sender=True)
     
@@ -367,10 +368,10 @@ async def handle_ex_wife(user_id, target_id, group_id, agree = False):
         write_group_config(
                 str(group_id), str(target_id), user_wife, today, config)
         # JAG: Exchange wife history
-        write_db_history('exchange', 
-                         user_id, target_id, group_id, target_wife, today)
-        write_db_history('exchange', 
-                         target_id, user_id, group_id, user_wife, today)
+        write_db_history('exchange', user_id, target_id, group_id, 
+                         target_wife.split('.')[0], today)
+        write_db_history('exchange', target_id, user_id, group_id, 
+                         user_wife.split('.')[0], today)
     # 删除exchange_manager中对应的请求用户对记录
     exchange_manager.remove_exchange_request(group_id, user_id, target_id)
     # 取消超时任务
@@ -514,8 +515,8 @@ async def ntr_wife(bot, ev: CQEvent):
         write_group_config(
                 str(group_id), str(user_id), target_wife, today, config)
         # JAG: Ntr wife history
-        write_db_history('ntr', 
-                         user_id, target_id, group_id, target_wife, today)
+        write_db_history('ntr', user_id, target_id, group_id, 
+                         target_wife.split('.')[0], today)
         ntr_lmt.increase(target_id, -1)
         await bot.send(ev, '你的阴谋已成功！对方补偿1次反牛机会', 
                        at_sender=True)
