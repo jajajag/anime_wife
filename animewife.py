@@ -60,7 +60,7 @@ def write_db_history(wife_type, user_id, target_id, group_id, wife_name, date):
         '''
     # Write to db
     cursor.execute(insert_sql, (wife_type, user_id, target_id, 
-                                group_id, wife_name, date, success))
+                                group_id, wife_name, date))
     conn.commit()
     conn.close()
 
