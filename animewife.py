@@ -759,7 +759,7 @@ async def wife_stats(bot, ev: CQEvent):
     # 18. Most exchange user
     cursor.execute("""
         SELECT target_id, COUNT(*) as cnt FROM wife_history
-        WHERE wife_type = 'ntr' AND group_id = ? AND user_id = ?
+        WHERE wife_type = 'exchange' AND group_id = ? AND user_id = ?
         GROUP BY target_id ORDER BY cnt DESC LIMIT 1
     """, (group_id, user_id))
     result = cursor.fetchone()
