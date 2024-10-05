@@ -157,7 +157,7 @@ async def animewife(bot, ev: CQEvent):
     # 将选择的老婆信息写入群组配置
     write_group_config(groupid,user_id,wife_name,today,config)
     # JAG: Gacha wife history
-    write_db_history('gacha', user_id, 0, groupid, name, today)
+    write_db_history('gacha', user_id, 0, groupid, name[0], today)
     # 发送消息
     await bot.send(ev,result,at_sender=True)
     
