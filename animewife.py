@@ -28,8 +28,7 @@ def write_group_config(group_id: str,link_id:str,wife_name:str,date:str,config) 
     with open(config_file, 'w', encoding='utf-8') as f:
         json.dump(config, f, ensure_ascii=False)
 
-# Write history to db
-def write_db_history(wife_type, user_id, target_id, group_id, wife_name, date):
+def open_db_history():
     # wife_type: gacha, exchange, ntr
     db_name = os.path.join(os.path.dirname(__file__), 'config', f'history.db')
     conn = sqlite3.connect(db_name)
@@ -44,9 +43,15 @@ def write_db_history(wife_type, user_id, target_id, group_id, wife_name, date):
             wife_name TEXT,
             date TEXT
         )
-        '''
+    '''
     # Create table if not exists
     cursor.execute(create_table_sql)
+    return cursor, conn
+
+# Write history to db
+def write_db_history(wife_type, user_id, target_id, group_id, wife_name, date):
+    # Open db
+    cursor, conn = open_db_history()
     insert_sql = '''
         INSERT INTO wife_history
             (wife_type, user_id, target_id, group_id, wife_name, date)
@@ -631,11 +636,8 @@ async def search_wife(bot, ev: CQEvent):
 async def wife_stats(bot, ev: CQEvent):
     group_id = ev.group_id
     user_id = ev.user_id
-
-    member_info = await bot.get_group_member_info(
-            self_id=ev.self_id, group_id=ev.group_id, user_id=ev.user_id)
-    nick_name = member_info['card'] or member_info['nickname'] \
-            or member_info['user_id'] or '未找到对方id'
+    # Open db
+    cursor, conn = open_db_history()
 
     # 1. #wives collected
     cursor.execute("""
@@ -765,6 +767,8 @@ async def wife_stats(bot, ev: CQEvent):
         most_exchange_user = '?'
     # 19. Most exchange user count
     most_exchange_user_count = result[1] if result else 0
+    #conn.commit()
+    conn.close()
 
     message = '你目前已经解锁了{collected_count}/{total_count}位老婆。你总共抽过{gacha_count}次老婆，其中抽到最多的是{most_gacha_wife}({most_gacha_wife_count}次)。你已经成功牛了{ntr_count}次，你最喜欢牛的老婆是{most_ntr_wife}({most_ntr_wife_count}次)，最喜欢牛的群友是@{most_ntr_user}({most_ntr_user_count}次)。你被牛最多的老婆是{most_ntred_wife}({most_ntred_wife_count}次)，被{most_ntred_user}({most_ntred_user_count}次)牛走了最多的老婆。你进行过{exchange_count}次换妻，你最喜欢交换的老婆是{most_exchange_wife}({most_exchange_wife_count}次)，最喜欢找{most_exchange_user}({most_exchange_user_count}次)换妻。'
     await bot.send(ev, message, at_sender=True)
