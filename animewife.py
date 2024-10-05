@@ -789,6 +789,5 @@ async def wife_stats(bot, ev: CQEvent):
     ret += f'- 被牛最多的群友是@{most_ntred_user}({most_ntred_user_count}次)\n'
     ret += f'- 总计成功换过老婆{exchange_count}次\n'
     ret += f'- 最喜欢换的老婆是{most_exchange_wife}({most_exchange_wife_count}次)\n'
-    '你最喜欢交换的老婆是{most_exchange_wife}({most_exchange_wife_count}次)，'
     ret += f'- 最喜欢换的群友是@{most_exchange_user}({most_exchange_user_count}次)'
-    await bot.send(ev, message, at_sender=False)
+    await bot.send(ev, ret, at_sender=False)
