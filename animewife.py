@@ -647,10 +647,10 @@ async def wife_stats(bot, ev: CQEvent):
     # 1. #wives collected
     cursor.execute("""
         SELECT COUNT(DISTINCT wife_name) FROM wife_history
-        WHERE wife_type = 'gacha' AND group_id = ? AND user_id = ?
+        WHERE group_id = ? AND user_id = ?
     """, (group_id, user_id))
     result = cursor.fetchone()
-    collected_count = result if result else 0
+    collected_count = result[0] if result else 0
 
     # 2. Total #wives
     total_count = len(os.listdir(imgpath))
