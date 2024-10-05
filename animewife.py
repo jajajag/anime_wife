@@ -428,6 +428,7 @@ async def ex_wife_reply(bot, ev: CQEvent):
 async def reset_ntr_wife(bot, ev: CQEvent):
     # 获取QQ信息
     uid = ev.user_id
+    group_id = ev.group_id
     # 此注释的代码是仅限bot超级管理员使用，
     # 有需可启用并将下面判断权限的代码注释掉
     if uid not in hoshino.config.SUPERUSERS:
@@ -444,9 +445,10 @@ async def reset_ntr_wife(bot, ev: CQEvent):
         if seg.type == 'at' and seg.data['qq'] != 'all':
             target_id = int(seg.data['qq'])
             break
-    if target_id is None:
-        await bot.finish(ev,"请@要重置的用户")
-    ntr_lmt.reset(target_id)
+    #if target_id is None:
+    #    await bot.finish(ev,"请@要重置的用户")
+    target_id = target_id if target_id else user_id
+    ntr_lmt.reset(f"{target_id}_{group_id}")
     await bot.send(ev,"已重置次数")
 
 @sv.on_prefix('牛老婆')
@@ -459,7 +461,7 @@ async def ntr_wife(bot, ev: CQEvent):
         await bot.send(ev, '牛老婆功能未开启！', at_sender=False)
         return
     user_id = ev.user_id
-    if not ntr_lmt.check(user_id):
+    if not ntr_lmt.check(f"{user_id}_{group_id}"):
         await bot.send(ev, ntr_max_notice, at_sender=True)
         return
     target_id = None
@@ -506,7 +508,7 @@ async def ntr_wife(bot, ev: CQEvent):
     # 满足交换条件，添加进交换请求列表中
     exchange_manager.insert_exchange_request(group_id, user_id, target_id)
     # 牛老婆次数减少一次
-    ntr_lmt.increase(user_id)
+    ntr_lmt.increase(f"{user_id}_{group_id}")
     if random.random() < ntr_possibility: 
         # 删除双方老婆信息，将他人老婆信息改成自己的
         target_wife = config.get(str(target_id), [None])[0]
@@ -517,12 +519,13 @@ async def ntr_wife(bot, ev: CQEvent):
         # JAG: Ntr wife history
         write_db_history('ntr', user_id, target_id, group_id, 
                          target_wife.split('.')[0], today)
-        #ntr_lmt.increase(target_id, -1)
-        ntr_lmt.reset(target_id)
-        await bot.send(ev, '你的阴谋已成功！对方补偿重置牛老婆次数', 
+        ntr_lmt.increase(f"{target_id}_{group_id}", -1)
+        #ntr_lmt.reset(f"{target_id}_{group_id}")
+        #await bot.send(ev, '你的阴谋已成功！对方补偿重置牛老婆次数', 
+        await bot.send(ev, '你的阴谋已成功！对方补偿1次反牛机会', 
                        at_sender=True)
     else:
-        await bot.send(ev, f'你的阴谋失败了，黄毛被干掉了！你还有{_ntr_max - ntr_lmt.get_num(user_id)}条命', at_sender=True)
+        await bot.send(ev, f"你的阴谋失败了，黄毛被干掉了！你还有{_ntr_max - ntr_lmt.get_num('' + user_id + '_' + group_id)}条命", at_sender=True)
     # 清除交换请求锁
     exchange_manager.remove_exchange_request(group_id, user_id, target_id)
     await asyncio.sleep(1)
@@ -775,5 +778,17 @@ async def wife_stats(bot, ev: CQEvent):
     #conn.commit()
     conn.close()
 
-    message = f'{user_name}目前已经解锁了{collected_count}/{total_count}位老婆。你总共抽过{gacha_count}次老婆，其中抽到最多的是{most_gacha_wife}({most_gacha_wife_count}次)。你已经成功牛了{ntr_count}次，你最喜欢牛的老婆是{most_ntr_wife}({most_ntr_wife_count}次)，最喜欢牛的群友是@{most_ntr_user}({most_ntr_user_count}次)。你被牛最多的老婆是{most_ntred_wife}({most_ntred_wife_count}次)，被@{most_ntred_user}({most_ntred_user_count}次)牛走了最多的老婆。你进行过{exchange_count}次换妻，你最喜欢交换的老婆是{most_exchange_wife}({most_exchange_wife_count}次)，最喜欢找@{most_exchange_user}({most_exchange_user_count}次)换妻。'
-    await bot.send(ev, message, at_sender=True)
+    ret = f'@{user_name}的老婆档案：\n}'
+    ret += f'- 总计成功解锁老婆{collected_count}/{total_count}位\n'
+    ret += f'- 总计成功抽过老婆{gacha_count}次\n'
+    ret += f'- 抽到最多的老婆是{most_gacha_wife}({most_gacha_wife_count}次)\n'
+    ret += f'- 总计成功牛过老婆{ntr_count}次\n'
+    ret += f'- 最喜欢牛的老婆是{most_ntr_wife}({most_ntr_wife_count}次)\n'
+    ret += f'- 最喜欢牛的群友是@{most_ntr_user}({most_ntr_user_count}次)\n'
+    ret += f'- 被牛最多的老婆是{most_ntred_wife}({most_ntred_wife_count}次)\n'
+    ret += f'- 被牛最多的群友是@{most_ntred_user}({most_ntred_user_count}次)\n'
+    ret += f'- 总计成功换过老婆{exchange_count}次\n'
+    ret += f'- 最喜欢换的老婆是{most_exchange_wife}({most_exchange_wife_count}次)\n'
+    '你最喜欢交换的老婆是{most_exchange_wife}({most_exchange_wife_count}次)，'
+    ret += f'- 最喜欢换的群友是@{most_exchange_user}({most_exchange_user_count}次)'
+    await bot.send(ev, message, at_sender=False)
