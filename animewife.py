@@ -447,7 +447,7 @@ async def reset_ntr_wife(bot, ev: CQEvent):
             break
     #if target_id is None:
     #    await bot.finish(ev,"请@要重置的用户")
-    target_id = target_id if target_id else user_id
+    target_id = target_id if target_id else uid
     ntr_lmt.reset(f"{target_id}_{group_id}")
     await bot.send(ev,"已重置次数")
 
