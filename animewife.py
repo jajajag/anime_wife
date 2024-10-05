@@ -525,7 +525,7 @@ async def ntr_wife(bot, ev: CQEvent):
         await bot.send(ev, '你的阴谋已成功！对方补偿1次反牛机会', 
                        at_sender=True)
     else:
-        await bot.send(ev, f'你的阴谋失败了，黄毛被干掉了！你还有{_ntr_max - ntr_lmt.get_num("" + user_id + "_" + group_id)}条命', at_sender=True)
+        await bot.send(ev, f'你的阴谋失败了，黄毛被干掉了！你还有{_ntr_max - ntr_lmt.get_num(str(user_id) + "_" + str(group_id))}条命', at_sender=True)
     # 清除交换请求锁
     exchange_manager.remove_exchange_request(group_id, user_id, target_id)
     await asyncio.sleep(1)
@@ -779,15 +779,15 @@ async def wife_stats(bot, ev: CQEvent):
     conn.close()
 
     ret = f'@{user_name}的老婆档案：\n'
-    ret += f'- 总计成功解锁老婆{collected_count}/{total_count}位\n'
-    ret += f'- 总计成功抽过老婆{gacha_count}次\n'
-    ret += f'- 抽到最多的老婆是{most_gacha_wife}({most_gacha_wife_count}次)\n'
-    ret += f'- 总计成功牛过老婆{ntr_count}次\n'
-    ret += f'- 最喜欢牛的老婆是{most_ntr_wife}({most_ntr_wife_count}次)\n'
-    ret += f'- 最喜欢牛的群友是@{most_ntr_user}({most_ntr_user_count}次)\n'
-    ret += f'- 被牛最多的老婆是{most_ntred_wife}({most_ntred_wife_count}次)\n'
-    ret += f'- 被牛最多的群友是@{most_ntred_user}({most_ntred_user_count}次)\n'
-    ret += f'- 总计成功换过老婆{exchange_count}次\n'
-    ret += f'- 最喜欢换的老婆是{most_exchange_wife}({most_exchange_wife_count}次)\n'
-    ret += f'- 最喜欢换的群友是@{most_exchange_user}({most_exchange_user_count}次)'
+    ret += f'- 总计解锁的老婆：{collected_count}/{total_count}位\n'
+    ret += f'- 总计抽过的老婆：{gacha_count}次\n'
+    ret += f'- 抽到最多的老婆：{most_gacha_wife}({most_gacha_wife_count}次)\n'
+    ret += f'- 总计牛过的老婆：{ntr_count}次\n'
+    ret += f'- 最喜欢牛的老婆：{most_ntr_wife}({most_ntr_wife_count}次)\n'
+    ret += f'- 最喜欢牛的群友：@{most_ntr_user}({most_ntr_user_count}次)\n'
+    ret += f'- 被牛最多的老婆：{most_ntred_wife}({most_ntred_wife_count}次)\n'
+    ret += f'- 被牛最多的群友：@{most_ntred_user}({most_ntred_user_count}次)\n'
+    ret += f'- 总计换过的老婆：{exchange_count}次\n'
+    ret += f'- 最喜欢换的老婆：{most_exchange_wife}({most_exchange_wife_count}次)\n'
+    ret += f'- 最喜欢换的群友：@{most_exchange_user}({most_exchange_user_count}次)'
     await bot.send(ev, ret, at_sender=False)
