@@ -517,8 +517,9 @@ async def ntr_wife(bot, ev: CQEvent):
         # JAG: Ntr wife history
         write_db_history('ntr', user_id, target_id, group_id, 
                          target_wife.split('.')[0], today)
-        ntr_lmt.increase(target_id, -1)
-        await bot.send(ev, '你的阴谋已成功！对方补偿1次反牛机会', 
+        #ntr_lmt.increase(target_id, -1)
+        ntr_lmt.reset(target_id)
+        await bot.send(ev, '你的阴谋已成功！对方补偿重置牛老婆次数', 
                        at_sender=True)
     else:
         await bot.send(ev, f'你的阴谋失败了，黄毛被干掉了！你还有{_ntr_max - ntr_lmt.get_num(user_id)}条命', at_sender=True)
@@ -630,6 +631,12 @@ async def search_wife(bot, ev: CQEvent):
 async def wife_stats(bot, ev: CQEvent):
     group_id = ev.group_id
     user_id = ev.user_id
+    target_id = None
+    for seg in ev.message:
+        if seg.type == 'at' and seg.data['qq'] != 'all':
+            target_id = int(seg.data['qq'])
+            break
+    user_id = target_id if target_id else user_id
     # Open db
     cursor, conn = open_db_history()
 
