@@ -525,7 +525,7 @@ async def ntr_wife(bot, ev: CQEvent):
         await bot.send(ev, '你的阴谋已成功！对方补偿1次反牛机会', 
                        at_sender=True)
     else:
-        await bot.send(ev, f"你的阴谋失败了，黄毛被干掉了！你还有{_ntr_max - ntr_lmt.get_num('' + user_id + '_' + group_id)}条命", at_sender=True)
+        await bot.send(ev, f'你的阴谋失败了，黄毛被干掉了！你还有{_ntr_max - ntr_lmt.get_num("" + user_id + "_" + group_id)}条命', at_sender=True)
     # 清除交换请求锁
     exchange_manager.remove_exchange_request(group_id, user_id, target_id)
     await asyncio.sleep(1)
@@ -778,7 +778,7 @@ async def wife_stats(bot, ev: CQEvent):
     #conn.commit()
     conn.close()
 
-    ret = f'@{user_name}的老婆档案：\n}'
+    ret = f'@{user_name}的老婆档案：\n'
     ret += f'- 总计成功解锁老婆{collected_count}/{total_count}位\n'
     ret += f'- 总计成功抽过老婆{gacha_count}次\n'
     ret += f'- 抽到最多的老婆是{most_gacha_wife}({most_gacha_wife_count}次)\n'
