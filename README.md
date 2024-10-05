@@ -45,10 +45,6 @@ max_notice = f'为防止滥用，管理员一天最多可添加{_max}次，若�
 [网盘下载](https://pan.baidu.com/s/1FbRtczF1h1jIov_CXU1qew?pwd=amls)
 提取码：amls
 
-## 效果图
-
-![效果图](mdimg.jpg) 
-
 ## 参考致谢
 
 | [dailywife](https://github.com/SonderXiaoming/dailywife) | [@SonderXiaoming](https://github.com/SonderXiaoming) |
