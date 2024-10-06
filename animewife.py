@@ -673,7 +673,7 @@ async def wife_stats(bot, ev: CQEvent):
         GROUP BY wife_name ORDER BY cnt DESC LIMIT 1
     """, (group_id, user_id))
     result = cursor.fetchone()
-    most_gacha_wife = result[0] if result else '???'
+    most_gacha_wife = result[0] if result else '？？？'
     # 5. Most wife from gacha count
     most_gacha_wife_count = result[1] if result else 0
 
@@ -692,7 +692,7 @@ async def wife_stats(bot, ev: CQEvent):
         GROUP BY wife_name ORDER BY cnt DESC LIMIT 1
     """, (group_id, user_id))
     result = cursor.fetchone()
-    most_ntr_wife = result[0] if result else '???'
+    most_ntr_wife = result[0] if result else '？？？'
     # 8. Most ntr wife count
     most_ntr_wife_count = result[1] if result else 0
 
@@ -709,7 +709,7 @@ async def wife_stats(bot, ev: CQEvent):
         most_ntr_user = member_info['card'] or member_info['nickname'] \
             or member_info['user_id'] or '未找到对方id'
     else:
-        most_ntr_user = '???'
+        most_ntr_user = '？？？'
     # 10. Most ntr user count
     most_ntr_user_count = result[1] if result else 0
 
@@ -720,7 +720,7 @@ async def wife_stats(bot, ev: CQEvent):
         GROUP BY wife_name ORDER BY cnt DESC LIMIT 1
     """, (group_id, user_id))
     result = cursor.fetchone()
-    most_ntred_wife = result[0] if result else '???'
+    most_ntred_wife = result[0] if result else '？？？'
     # 12. Most ntred wife count
     most_ntred_wife_count = result[1] if result else 0
 
@@ -737,7 +737,7 @@ async def wife_stats(bot, ev: CQEvent):
         most_ntred_user = member_info['card'] or member_info['nickname'] \
             or member_info['user_id'] or '未找到对方id'
     else:
-        most_ntred_user = '???'
+        most_ntred_user = '？？？'
     # 14. Most ntred user count
     most_ntred_user_count = result[1] if result else 0
 
@@ -755,7 +755,7 @@ async def wife_stats(bot, ev: CQEvent):
         GROUP BY wife_name ORDER BY cnt DESC LIMIT 1
     """, (group_id, user_id))
     result = cursor.fetchone()
-    most_exchange_wife = result[0] if result else '???'
+    most_exchange_wife = result[0] if result else '？？？'
     # 17. Most exchange wife count
     most_exchange_wife_count = result[1] if result else 0
 
@@ -772,7 +772,7 @@ async def wife_stats(bot, ev: CQEvent):
         most_exchange_user = member_info['card'] or member_info['nickname'] \
             or member_info['user_id'] or '未找到对方id'
     else:
-        most_exchange_user = '???'
+        most_exchange_user = '？？？'
     # 19. Most exchange user count
     most_exchange_user_count = result[1] if result else 0
     #conn.commit()
