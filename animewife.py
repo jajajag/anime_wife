@@ -101,10 +101,6 @@ sv = Service(
     help_ = sv_help #帮助说明
     )
 
-@sv.on_fullmatch('抽老婆帮助', only_to_me=False)
-async def send_wifehelp(bot, ev):
-    await bot.send(ev, f'{sv_help}')
-
 @sv.on_fullmatch('抽老婆')
 async def animewife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQ信息
