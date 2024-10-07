@@ -78,7 +78,7 @@ _ntr_max=1
 ntr_lmt= DailyNumberLimiter(_ntr_max)
 # 当超出次数时的提示
 #ntr_max_notice = f'为防止牛头人泛滥，一天最多可牛{_ntr_max}次（无保底），若需添加更多请使用 来杯咖啡 联系维护组'
-ntr_max_notice = f'为防止牛头人泛滥，一天最多可牛{_ntr_max}次（无保底）。'
+ntr_max_notice = f'为防止牛头人泛滥，一天最多可牛{_ntr_max}次（无保底）'
 # 牛老婆的成功率
 ntr_possibility = 0.5
 
