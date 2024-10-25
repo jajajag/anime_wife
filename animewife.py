@@ -88,6 +88,7 @@ sv_help = '''
 [牛老婆] 50%概率牛到别人老婆(1次/日)
 [查老婆] 加@某人可以查别人老婆
 [重置牛老婆] 加@某人可以重置别人牛的次数
+[跟你爆了] 当你抽来或换来的老婆被对方牛走，而你没有次数时，可以以今天无法再抽老婆为代价，和对方爆了
 [切换ntr开关状态]
 '''.strip()
 
@@ -282,8 +283,9 @@ class ExchangeManager:
             
 exchange_manager = ExchangeManager()
 
-@sv.on_prefix('交换老婆')
-@sv.on_suffix('交换老婆')
+#@sv.on_prefix('交换老婆')
+#@sv.on_suffix('交换老婆')
+@sv.on_rex(r'^(交?换老婆)|(交?换老婆)$')
 async def exchange_wife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQ信息
     group_id = ev.group_id
@@ -326,12 +328,12 @@ async def exchange_wife(bot, ev: CQEvent):
         return
     # 检查用户的老婆信息是否是今天
     if config[str(user_id)][1] != today:
-        await bot.send(ev, '您的老婆已过期，请抽取新的老婆后再交换', 
+        await bot.send(ev, '你的老婆已过期，请抽取新的老婆后再交换', 
                        at_sender=True)
         return
     # 检查目标的老婆信息是否是今天
     if config[str(target_id)][1] != today:
-        await bot.send(ev, '对方的老婆已过期，您也不想要过期的老婆吧', 
+        await bot.send(ev, '对方的老婆已过期，你也不想要过期的老婆吧', 
                        at_sender=True)
         return
     # 满足交换条件，添加进交换请求列表中
@@ -444,7 +446,9 @@ async def reset_ntr_wife(bot, ev: CQEvent):
     #if target_id is None:
     #    await bot.finish(ev,"请@要重置的用户")
     target_id = target_id if target_id else uid
-    ntr_lmt.reset(f"{target_id}_{group_id}")
+    #ntr_lmt.reset(f"{target_id}_{group_id}")
+    # JAG: Change reset to increment by 1
+    ntr_lmt.increase(f"{target_id}_{group_id}", -1)
     await bot.send(ev,"已重置次数")
 
 @sv.on_prefix('牛老婆')
@@ -498,7 +502,7 @@ async def ntr_wife(bot, ev: CQEvent):
         return
     # 检查目标的老婆信息是否是今天
     if config[str(target_id)][1] != today:
-        await bot.send(ev, '对方的老婆已过期，您也不想要过期的老婆吧', 
+        await bot.send(ev, '对方的老婆已过期，你也不想要过期的老婆吧', 
                        at_sender=True)
         return
     # 满足交换条件，添加进交换请求列表中
@@ -787,3 +791,71 @@ async def wife_stats(bot, ev: CQEvent):
     ret += f'- 最喜欢换的老婆：{most_exchange_wife}({most_exchange_wife_count}次)\n'
     ret += f'- 最喜欢换的群友：@{most_exchange_user}({most_exchange_user_count}次)'
     await bot.send(ev, ret, at_sender=False)
+
+@sv.on_rex(r'^((md)?(和|跟)你爆了)|((md)?(和|跟)你爆了)$')
+async def ntr_wife(bot, ev: CQEvent):
+    # 获取QQ群、群用户QQ信息
+    group_id = str(ev.group_id)
+    user_id = ev.user_id
+    if ntr_lmt.check(f"{user_id}_{group_id}"):
+        await bot.send(ev, '你还有牛老婆次数哦', at_sender=True)
+        return
+    target_id = None
+    today = str(datetime.date.today())
+    # 获取用户和目标用户的配置信息
+    config = load_group_config(group_id)
+    # 提取目标用户的QQ号
+    for seg in ev.message:
+        if seg.type == 'at' and seg.data['qq'] != 'all':
+            target_id = int(seg.data['qq'])
+            #print("提取目标用户的QQ号：" + str(target_id))
+            break
+    if not target_id:
+        #print("未找到目标用户QQ或者未@对方")
+        await bot.send(ev, '请指定一个要下手的目标', at_sender=True)
+        return
+    # 检查发起者或目标者是否已经在任何交换中
+    if not exchange_manager.is_eligible_for_exchange(
+            group_id, user_id, target_id):
+        await bot.send(ev, '双方有人正在进行换妻play中，请稍后再试', 
+                       at_sender=True)
+        return
+    # 如果该群组有交换请求
+    if exchange_manager.is_exchange_in_progress(ev.group_id):
+        await bot.send(ev, '正在办理其他人的换妻手续，很忙，请稍后再试', 
+                       at_sender=True)
+        return
+    # 检查是否尝试交换给自己
+    if user_id == target_id:
+        await bot.send(ev, '不能和自己爆了', at_sender=True)
+        return
+    if not config:
+        await bot.send(ev, '没有找到本群婚姻登记信息', at_sender=True)
+        return
+    # 满足交换条件，添加进交换请求列表中
+    exchange_manager.insert_exchange_request(group_id, user_id, target_id)
+    # Get target wife's name
+    target_wife = config.get(str(target_id), [None])[0]
+    target_wife_name = target_wife.split('.')[0]
+    # Check the db if the wife is ntred from the user
+    cursor, conn = open_db_history()
+    cursor.execute("""
+        SELECT 1 FROM wife_history
+        WHERE date = ? AND wife_name = ? AND group_id = ?
+        AND (wife_type IN ('gacha', 'exchange') AND user_id = ?)
+    """, (today, target_wife_name, group_id, user_id))
+    result = cursor.fetchone()
+    if not result:
+        await bot.send(ev, '对方的老婆不是从你那里牛的哦', at_sender=True)
+    else:
+        # 删除双方老婆信息，将他人老婆信息改成自己的
+        del config[str(target_id)]
+        config.pop(str(user_id), None)
+        write_group_config(
+                str(group_id), str(user_id), target_wife, today, config)
+        await bot.send(ev, '你成功和对方爆了，对方失去了老婆', at_sender=True)
+    # Close db
+    conn.close()
+    # 清除交换请求锁
+    exchange_manager.remove_exchange_request(group_id, user_id, target_id)
+    await asyncio.sleep(1)
