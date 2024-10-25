@@ -82,6 +82,12 @@ ntr_max_notice = f'为防止牛头人泛滥，一天最多可牛{_ntr_max}次（
 # 牛老婆的成功率
 ntr_possibility = 0.5
 
+# 每人每天可自爆的次数
+_ex_max=1
+ex_lmt= DailyNumberLimiter(_ex_max)
+# 当超出次数时的提示
+ex_max_notice = '今天的老婆已经和别人爆了'
+
 sv_help = '''
 [抽老婆] 看看今天的二次元老婆是谁
 [交换老婆] @某人 + 交换老婆
@@ -107,6 +113,9 @@ async def animewife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQ信息
     groupid = ev.group_id
     user_id = ev.user_id
+    if not ex_lmt.check(f"{user_id}_{group_id}"):
+        await bot.send(ev, ex_max_notice, at_sender=True)
+        return
     wife_name = None
     # 获取今天的日期，转换为字符串格式
     today = str(datetime.date.today())
@@ -290,6 +299,9 @@ async def exchange_wife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQ信息
     group_id = ev.group_id
     user_id = ev.user_id
+    if not ex_lmt.check(f"{user_id}_{group_id}"):
+        await bot.send(ev, ex_max_notice, at_sender=True)
+        return
     target_id = None
     today = str(datetime.date.today())
     # 获取用户和目标用户的配置信息
@@ -461,6 +473,9 @@ async def ntr_wife(bot, ev: CQEvent):
         await bot.send(ev, '牛老婆功能未开启！', at_sender=False)
         return
     user_id = ev.user_id
+    if not ex_lmt.check(f"{user_id}_{group_id}"):
+        await bot.send(ev, ex_max_notice, at_sender=True)
+        return
     if not ntr_lmt.check(f"{user_id}_{group_id}"):
         await bot.send(ev, ntr_max_notice, at_sender=True)
         return
@@ -596,6 +611,9 @@ async def search_wife(bot, ev: CQEvent):
             break
     # 如果没指定就是自己
     target_id = target_id or str(ev.user_id)
+    if not ex_lmt.check(f"{target_id}_{group_id}"):
+        await bot.send(ev, ex_max_notice, at_sender=True)
+        return
     # 获取用户和目标用户的配置信息
     config = load_group_config(group_id)
     if config is not None:
