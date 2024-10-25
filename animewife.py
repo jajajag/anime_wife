@@ -26,6 +26,9 @@ def write_group_config(group_id: str,link_id:str,wife_name:str,date:str,config) 
         config[link_id] = [wife_name,date]
     else:
         config = {link_id:[wife_name,date]}
+    # JAG: Delete user if wife_name is empty
+    if wife_name == '':
+        del config[link_id]
     with open(config_file, 'w', encoding='utf-8') as f:
         json.dump(config, f, ensure_ascii=False)
 
@@ -878,8 +881,7 @@ async def ntr_wife(bot, ev: CQEvent):
         # 删除双方老婆信息，将他人老婆信息改成自己的
         del config[str(target_id)]
         config.pop(str(user_id), None)
-        write_group_config(
-                str(group_id), str(user_id), target_wife, today, config)
+        write_group_config(str(group_id), str(user_id), '', today, config)
         ex_lmt.increase(f"{user_id}_{group_id}")
         await bot.send(ev, '你成功和对方爆了，对方失去了老婆', at_sender=True)
     # Close db
