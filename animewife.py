@@ -880,6 +880,7 @@ async def ntr_wife(bot, ev: CQEvent):
         config.pop(str(user_id), None)
         write_group_config(
                 str(group_id), str(user_id), target_wife, today, config)
+        ex_lmt.increase(f"{user_id}_{group_id}", -1)
         await bot.send(ev, '你成功和对方爆了，对方失去了老婆', at_sender=True)
     # Close db
     conn.close()
