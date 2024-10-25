@@ -815,9 +815,6 @@ async def ntr_wife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQ信息
     group_id = str(ev.group_id)
     user_id = ev.user_id
-    if ntr_lmt.check(f"{user_id}_{group_id}"):
-        await bot.send(ev, '你还有牛老婆次数哦', at_sender=True)
-        return
     target_id = None
     today = str(datetime.date.today())
     # 获取用户和目标用户的配置信息
@@ -865,6 +862,9 @@ async def ntr_wife(bot, ev: CQEvent):
     result = cursor.fetchone()
     if not result:
         await bot.send(ev, '对方的老婆不是从你那里牛的哦', at_sender=True)
+    elif ntr_lmt.check(f"{user_id}_{group_id}"):
+        await bot.send(ev, '你还有牛老婆次数哦', at_sender=True)
+        return
     else:
         # 删除双方老婆信息，将他人老婆信息改成自己的
         del config[str(target_id)]
