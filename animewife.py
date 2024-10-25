@@ -111,7 +111,7 @@ sv = Service(
 @sv.on_fullmatch('抽老婆')
 async def animewife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQ信息
-    groupid = ev.group_id
+    group_id = ev.group_id
     user_id = ev.user_id
     if not ex_lmt.check(f"{user_id}_{group_id}"):
         await bot.send(ev, ex_max_notice, at_sender=True)
@@ -120,7 +120,7 @@ async def animewife(bot, ev: CQEvent):
     # 获取今天的日期，转换为字符串格式
     today = str(datetime.date.today())
     # 载入群组信息
-    config = load_group_config(groupid)
+    config = load_group_config(group_id)
     if config != None:
         # 检查用户QQ号是否在配置中
         if str(user_id) in list(config):
@@ -144,7 +144,7 @@ async def animewife(bot, ev: CQEvent):
         wife_name = random.choice(os.listdir(imgpath))
         # JAG: Gacha wife history
         write_db_history('gacha', 
-                         user_id, 0, groupid, wife_name.split('.')[0], today)
+                         user_id, 0, group_id, wife_name.split('.')[0], today)
     # 分割文件名和扩展名，只取图片名返回给用户
     name = wife_name.split('.')
     # 生成返回结果
@@ -156,7 +156,7 @@ async def animewife(bot, ev: CQEvent):
     except Exception as e:
         hoshino.logger.error(f'读取老婆图片时发生错误{type(e)}')
     # 将选择的老婆信息写入群组配置
-    write_group_config(groupid,user_id,wife_name,today,config)
+    write_group_config(group_id,user_id,wife_name,today,config)
     # 发送消息
     await bot.send(ev,result,at_sender=True)
     
