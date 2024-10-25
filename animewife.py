@@ -85,19 +85,13 @@ ntr_max_notice = f'为防止牛头人泛滥，一天最多可牛{_ntr_max}次（
 # 牛老婆的成功率
 ntr_possibility = 0.5
 
-# 每人每天可自爆的次数
-_ex_max=1
-ex_lmt= DailyNumberLimiter(_ex_max)
-# 当超出次数时的提示
-ex_max_notice = '今天的老婆已经和别人爆了'
-
 sv_help = '''
 [抽老婆] 看看今天的二次元老婆是谁
 [交换老婆] @某人 + 交换老婆
 [牛老婆] 50%概率牛到别人老婆(1次/日)
 [查老婆] 加@某人可以查别人老婆
 [重置牛老婆] 加@某人可以重置别人牛的次数
-[跟你爆了] 当你抽来或换来的老婆被对方牛走，而你没有次数时，可以以今天无法再抽老婆为代价，和对方爆了
+[复活吧我的爱人] 复活上一次被牛走的老婆
 [切换ntr开关状态]
 '''.strip()
 
@@ -116,9 +110,6 @@ async def animewife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQ信息
     group_id = ev.group_id
     user_id = ev.user_id
-    if not ex_lmt.check(f"{user_id}_{group_id}"):
-        await bot.send(ev, ex_max_notice, at_sender=True)
-        return
     wife_name = None
     # 获取今天的日期，转换为字符串格式
     today = str(datetime.date.today())
@@ -302,9 +293,6 @@ async def exchange_wife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQ信息
     group_id = ev.group_id
     user_id = ev.user_id
-    if not ex_lmt.check(f"{user_id}_{group_id}"):
-        await bot.send(ev, ex_max_notice, at_sender=True)
-        return
     target_id = None
     today = str(datetime.date.today())
     # 获取用户和目标用户的配置信息
@@ -476,9 +464,6 @@ async def ntr_wife(bot, ev: CQEvent):
         await bot.send(ev, '牛老婆功能未开启！', at_sender=False)
         return
     user_id = ev.user_id
-    if not ex_lmt.check(f"{user_id}_{group_id}"):
-        await bot.send(ev, ex_max_notice, at_sender=True)
-        return
     if not ntr_lmt.check(f"{user_id}_{group_id}"):
         await bot.send(ev, ntr_max_notice, at_sender=True)
         return
@@ -614,9 +599,6 @@ async def search_wife(bot, ev: CQEvent):
             break
     # 如果没指定就是自己
     target_id = target_id or str(ev.user_id)
-    if not ex_lmt.check(f"{target_id}_{group_id}"):
-        await bot.send(ev, ex_max_notice, at_sender=True)
-        return
     # 获取用户和目标用户的配置信息
     config = load_group_config(group_id)
     if config is not None:
@@ -813,8 +795,8 @@ async def wife_stats(bot, ev: CQEvent):
     ret += f'- 最喜欢换的群友：@{most_exchange_user}({most_exchange_user_count}次)'
     await bot.send(ev, ret, at_sender=False)
 
-@sv.on_rex(r'^((md)?(和|跟)你爆了)|((md)?(和|跟)你爆了)$')
-async def ntr_wife(bot, ev: CQEvent):
+#@sv.on_rex(r'^((md)?(和|跟)你爆了)|((md)?(和|跟)你爆了)$')
+async def exlode_wife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQ信息
     group_id = str(ev.group_id)
     user_id = ev.user_id
@@ -889,3 +871,31 @@ async def ntr_wife(bot, ev: CQEvent):
     # 清除交换请求锁
     exchange_manager.remove_exchange_request(group_id, user_id, target_id)
     await asyncio.sleep(1)
+
+@sv.on_fullmatch('复活吧我的爱人')
+async def animewife(bot, ev: CQEvent):
+    # Get group_id, user_id and today's date
+    group_id = ev.group_id
+    user_id = ev.user_id
+    today = str(datetime.date.today())
+    # Load group config
+    config = load_group_config(group_id)
+    # Check if the user has a wife today
+    if config is not None and str(user_id) in list(config) \
+            and config[str(user_id)][1] == today:
+        await bot.send(ev, '你已经有老婆了哦', at_sender=True)
+        return
+    cursor, conn = open_db_history()
+    cursor.execute("""
+        SELECT wife_name FROM wife_history WHERE date = ? AND group_id = ? 
+        AND user_id = ? AND wife_type IN ('gacha', 'exchange')
+        ORDER BY id DESC LIMIT 1;
+    """, (today, group_id, user_id))
+    result = cursor.fetchone()
+    # Check if the user has a wife from gacha or exchange
+    if result:
+        wife_name = result[0] + '.jpg'
+        write_group_config(group_id, user_id, wife_name, today, config)
+        await bot.send(ev, '复活吧！我的爱人！', at_sender=True)
+    else:
+        await bot.send(ev, '你没有老婆可以复活', at_sender=True)
