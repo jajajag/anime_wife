@@ -847,6 +847,15 @@ async def ntr_wife(bot, ev: CQEvent):
     if not config:
         await bot.send(ev, '没有找到本群婚姻登记信息', at_sender=True)
         return
+    # 检查目标用户是否有老婆信息
+    if str(target_id) not in config:
+        await bot.send(ev, '对方没有老婆哦', at_sender=True)
+        return
+    # 检查目标的老婆信息是否是今天
+    if config[str(target_id)][1] != today:
+        await bot.send(ev, '对方的老婆已过期，夫妻没有隔夜仇哦', 
+                       at_sender=True)
+        return
     # 满足交换条件，添加进交换请求列表中
     exchange_manager.insert_exchange_request(group_id, user_id, target_id)
     # Get target wife's name
