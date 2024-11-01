@@ -26,9 +26,6 @@ def write_group_config(group_id: str,link_id:str,wife_name:str,date:str,config) 
         config[link_id] = [wife_name,date]
     else:
         config = {link_id:[wife_name,date]}
-    # JAG: Delete user if wife_name is empty
-    if wife_name == '':
-        del config[link_id]
     with open(config_file, 'w', encoding='utf-8') as f:
         json.dump(config, f, ensure_ascii=False)
 
@@ -91,6 +88,7 @@ sv_help = '''
 [牛老婆] 50%概率牛到别人老婆(1次/日)
 [查老婆] 加@某人可以查别人老婆
 [重置牛老婆] 加@某人可以重置别人牛的次数
+[跟你爆了] 消耗2条命抢回自己被牛走的老婆，且不补偿对方次数
 [复活吧我的爱人] 复活上一次被牛走的老婆
 [切换ntr开关状态]
 '''.strip()
@@ -169,8 +167,7 @@ async def download_async(url: str, name: str):
     with open(abs_path, 'wb') as f:
         f.write(content)
 
-@sv.on_prefix(('添老婆','添加老婆'))
-@sv.on_suffix(('添老婆','添加老婆'))
+@sv.on_rex(r'^(添?加老婆)|(添?加老婆)$')
 async def add_wife(bot,ev:CQEvent):
     # 获取QQ信息
     uid = ev.user_id
@@ -286,8 +283,6 @@ class ExchangeManager:
             
 exchange_manager = ExchangeManager()
 
-#@sv.on_prefix('交换老婆')
-#@sv.on_suffix('交换老婆')
 @sv.on_rex(r'^(交?换老婆)|(交?换老婆)$')
 async def exchange_wife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQ信息
@@ -424,8 +419,7 @@ async def ex_wife_reply(bot, ev: CQEvent):
             await bot.send(ev, '交换成功', at_sender=True)
 
 # 重置牛老婆次数限制
-@sv.on_prefix('重置牛老婆')
-@sv.on_suffix('重置牛老婆')
+@sv.on_rex(r'^(重置牛老婆)|(重置牛老婆)$')
 async def reset_ntr_wife(bot, ev: CQEvent):
     # 获取QQ信息
     uid = ev.user_id
@@ -453,10 +447,9 @@ async def reset_ntr_wife(bot, ev: CQEvent):
     # JAG: Change reset to increment by 1
     ntr_lmt.increase(f"{target_id}_{group_id}", -1)
     await bot.send(ev,"已重置次数")
-
-@sv.on_prefix('牛老婆')
-@sv.on_suffix('牛老婆')
-async def ntr_wife(bot, ev: CQEvent):
+    
+# JAG: Helper for ntr_wife and ntr_back_wife
+async def ntr_wife_helper(bot, ev: CQEvent, ntr_back=False):
     # 获取QQ群、群用户QQ信息
     load_ntr_statuses()
     group_id = str(ev.group_id)
@@ -464,8 +457,13 @@ async def ntr_wife(bot, ev: CQEvent):
         await bot.send(ev, '牛老婆功能未开启！', at_sender=False)
         return
     user_id = ev.user_id
-    if not ntr_lmt.check(f"{user_id}_{group_id}"):
+    # JAG: Check ntr limit
+    if not ntr_back and not ntr_lmt.check(f"{user_id}_{group_id}"):
         await bot.send(ev, ntr_max_notice, at_sender=True)
+        return
+    # JAG: Check ntr_back limit
+    if ntr_back and _ntr_max - ntr_lmt.get_num(f"{user_id}_{group_id}") < 2:
+        await bot.send(ev, '你需要2条命来和对方爆了', at_sender=True)
         return
     target_id = None
     today = str(datetime.date.today())
@@ -494,14 +492,14 @@ async def ntr_wife(bot, ev: CQEvent):
         return
     # 检查是否尝试交换给自己
     if user_id == target_id:
-        await bot.send(ev, '不能牛自己', at_sender=True)
+        await bot.send(ev, '不能对自己下手', at_sender=True)
         return
     if not config:
         await bot.send(ev, '没有找到本群婚姻登记信息', at_sender=True)
         return
     # 检查目标用户是否有老婆信息
     if str(target_id) not in config:
-        await bot.send(ev, '需要对方有老婆才能牛', at_sender=True)
+        await bot.send(ev, '对方没有老婆哦', at_sender=True)
         return
     # 检查目标的老婆信息是否是今天
     if config[str(target_id)][1] != today:
@@ -510,32 +508,65 @@ async def ntr_wife(bot, ev: CQEvent):
         return
     # 满足交换条件，添加进交换请求列表中
     exchange_manager.insert_exchange_request(group_id, user_id, target_id)
-    # 牛老婆次数减少一次
-    ntr_lmt.increase(f"{user_id}_{group_id}")
-    if random.random() < ntr_possibility: 
+    # Get target wife
+    target_wife = config.get(str(target_id), [None])[0]
+    if ntr_back:
+        # Get target wife's name
+        target_wife_name = target_wife.split('.')[0]
+        # Check the db if the wife is ntred from the user
+        cursor, conn = open_db_history()
+        cursor.execute("""
+            SELECT 1 FROM wife_history
+            WHERE date = ? AND wife_name = ? AND group_id = ?
+            AND wife_type = 'ntr' AND user_id = ? AND target_id = ?
+        """, (today, target_wife_name, group_id, target_id, user_id))
+        result = cursor.fetchone()
+        # Close db
+        conn.close()
+        # Check if the wife is ntred from the user
+        if not result:
+            await bot.send(ev, '对方的老婆不是从你那里牛的哦', at_sender=True)
+            return
+        # 牛老婆次数减少2次
+        ntr_lmt.increase(f"{user_id}_{group_id}", 2)
         # 删除双方老婆信息，将他人老婆信息改成自己的
-        target_wife = config.get(str(target_id), [None])[0]
         del config[str(target_id)]
         config.pop(str(user_id), None)
         write_group_config(
                 str(group_id), str(user_id), target_wife, today, config)
-        # JAG: Ntr wife history
-        write_db_history('ntr', user_id, target_id, group_id, 
-                         target_wife.split('.')[0], today)
-        ntr_lmt.increase(f"{target_id}_{group_id}", -1)
-        #ntr_lmt.reset(f"{target_id}_{group_id}")
-        #await bot.send(ev, '你的阴谋已成功！对方补偿重置牛老婆次数', 
-        await bot.send(ev, '你的阴谋已成功！对方补偿1次反牛机会', 
-                       at_sender=True)
+        await bot.send(ev, '牛头人必须死！你消耗2条命抢回了自己的老婆，并且对方没有获得补偿次数', at_sender=True)
     else:
-        await bot.send(ev, f'你的阴谋失败了，黄毛被干掉了！你还有{_ntr_max - ntr_lmt.get_num(str(user_id) + "_" + str(group_id))}条命', at_sender=True)
+        # 牛老婆次数减少1次
+        ntr_lmt.increase(f"{user_id}_{group_id}")
+        if random.random() < ntr_possibility: 
+            # 删除双方老婆信息，将他人老婆信息改成自己的
+            del config[str(target_id)]
+            config.pop(str(user_id), None)
+            write_group_config(
+                    str(group_id), str(user_id), target_wife, today, config)
+            # JAG: Ntr wife history
+            write_db_history('ntr', user_id, target_id, group_id, 
+                             target_wife.split('.')[0], today)
+            ntr_lmt.increase(f"{target_id}_{group_id}", -1)
+            await bot.send(ev, '你的阴谋已成功！对方补偿1次反牛机会', 
+                           at_sender=True)
+        else:
+            await bot.send(ev, f'你的阴谋失败了，黄毛被干掉了！你还有{_ntr_max - ntr_lmt.get_num(str(user_id) + "_" + str(group_id))}条命', at_sender=True)
     # 清除交换请求锁
     exchange_manager.remove_exchange_request(group_id, user_id, target_id)
     await asyncio.sleep(1)
 
-# NTR开关
+# JAG: 牛老婆
+@sv.on_rex(r'^(牛老婆)|(牛老婆)$')
+async def ntr_wife(bot, ev: CQEvent):
+    await ntr_wife_helper(bot, ev, ntr_back=False)
 
-# 文件路径
+# JAG: 牛回本属于你的老婆
+@sv.on_rex(r'^((md)?(和|跟)你爆了)|((md)?(和|跟)你爆了)$')
+async def ntr_back_wife(bot, ev: CQEvent):
+    await ntr_wife_helper(bot, ev, ntr_back=True)
+
+# NTR开关文件路径
 ntr_status_file = os.path.join(os.path.dirname(__file__), 
                                'config', 'ntr_status.json')
 
@@ -583,8 +614,7 @@ async def switch_ntr(bot, ev: CQEvent):
     
 ########### 查看别人老婆 ##############
 
-@sv.on_prefix('查老婆')
-@sv.on_suffix('查老婆')
+@sv.on_rex(r'^(查老婆)|(查老婆)$')
 async def search_wife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQ信息
     load_ntr_statuses()
@@ -632,8 +662,8 @@ async def search_wife(bot, ev: CQEvent):
     # 发送消息
     await bot.send(ev,result,at_sender=True)
 
-@sv.on_prefix('老婆档案')
-@sv.on_suffix('老婆档案')
+# JAG: 查询老婆历史记录
+@sv.on_rex(r'^(老婆档案)|(老婆档案)$')
 async def wife_stats(bot, ev: CQEvent):
     group_id = ev.group_id
     user_id = ev.user_id
@@ -795,83 +825,7 @@ async def wife_stats(bot, ev: CQEvent):
     ret += f'- 最喜欢换的群友：@{most_exchange_user}({most_exchange_user_count}次)'
     await bot.send(ev, ret, at_sender=False)
 
-#@sv.on_rex(r'^((md)?(和|跟)你爆了)|((md)?(和|跟)你爆了)$')
-async def exlode_wife(bot, ev: CQEvent):
-    # 获取QQ群、群用户QQ信息
-    group_id = str(ev.group_id)
-    user_id = ev.user_id
-    target_id = None
-    today = str(datetime.date.today())
-    # 获取用户和目标用户的配置信息
-    config = load_group_config(group_id)
-    # 提取目标用户的QQ号
-    for seg in ev.message:
-        if seg.type == 'at' and seg.data['qq'] != 'all':
-            target_id = int(seg.data['qq'])
-            #print("提取目标用户的QQ号：" + str(target_id))
-            break
-    if not target_id:
-        #print("未找到目标用户QQ或者未@对方")
-        await bot.send(ev, '请指定一个要下手的目标', at_sender=True)
-        return
-    # 检查发起者或目标者是否已经在任何交换中
-    if not exchange_manager.is_eligible_for_exchange(
-            group_id, user_id, target_id):
-        await bot.send(ev, '双方有人正在进行换妻play中，请稍后再试', 
-                       at_sender=True)
-        return
-    # 如果该群组有交换请求
-    if exchange_manager.is_exchange_in_progress(ev.group_id):
-        await bot.send(ev, '正在办理其他人的换妻手续，很忙，请稍后再试', 
-                       at_sender=True)
-        return
-    # 检查是否尝试交换给自己
-    if user_id == target_id:
-        await bot.send(ev, '不能和自己爆了', at_sender=True)
-        return
-    if not config:
-        await bot.send(ev, '没有找到本群婚姻登记信息', at_sender=True)
-        return
-    # 检查目标用户是否有老婆信息
-    if str(target_id) not in config:
-        await bot.send(ev, '对方没有老婆哦', at_sender=True)
-        return
-    # 检查目标的老婆信息是否是今天
-    if config[str(target_id)][1] != today:
-        await bot.send(ev, '对方的老婆已过期，夫妻没有隔夜仇哦', 
-                       at_sender=True)
-        return
-    # 满足交换条件，添加进交换请求列表中
-    exchange_manager.insert_exchange_request(group_id, user_id, target_id)
-    # Get target wife's name
-    target_wife = config.get(str(target_id), [None])[0]
-    target_wife_name = target_wife.split('.')[0]
-    # Check the db if the wife is ntred from the user
-    cursor, conn = open_db_history()
-    cursor.execute("""
-        SELECT 1 FROM wife_history
-        WHERE date = ? AND wife_name = ? AND group_id = ?
-        AND (wife_type IN ('gacha', 'exchange') AND user_id = ?)
-    """, (today, target_wife_name, group_id, user_id))
-    result = cursor.fetchone()
-    if not result:
-        await bot.send(ev, '对方的老婆不是从你那里牛的哦', at_sender=True)
-    elif ntr_lmt.check(f"{user_id}_{group_id}"):
-        await bot.send(ev, '你还有牛老婆次数哦', at_sender=True)
-        return
-    else:
-        # 删除双方老婆信息，将他人老婆信息改成自己的
-        del config[str(target_id)]
-        config.pop(str(user_id), None)
-        write_group_config(str(group_id), str(user_id), '', today, config)
-        ex_lmt.increase(f"{user_id}_{group_id}")
-        await bot.send(ev, '你成功和对方爆了，对方失去了老婆', at_sender=True)
-    # Close db
-    conn.close()
-    # 清除交换请求锁
-    exchange_manager.remove_exchange_request(group_id, user_id, target_id)
-    await asyncio.sleep(1)
-
+# JAG: 复活被牛走的老婆
 @sv.on_fullmatch('复活吧我的爱人')
 async def animewife(bot, ev: CQEvent):
     # Get group_id, user_id and today's date
