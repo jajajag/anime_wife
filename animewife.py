@@ -506,10 +506,9 @@ async def ntr_wife_helper(bot, ev: CQEvent, ntr_back=False):
         await bot.send(ev, '对方的老婆已过期，你也不想要过期的老婆吧', 
                        at_sender=True)
         return
-    # 满足交换条件，添加进交换请求列表中
-    exchange_manager.insert_exchange_request(group_id, user_id, target_id)
     # Get target wife
     target_wife = config.get(str(target_id), [None])[0]
+    # Check specific ntr_back condition
     if ntr_back:
         # Get target wife's name
         target_wife_name = target_wife.split('.')[0]
@@ -527,6 +526,14 @@ async def ntr_wife_helper(bot, ev: CQEvent, ntr_back=False):
         if not result:
             await bot.send(ev, '对方的老婆不是从你那里牛的哦', at_sender=True)
             return
+        # Check if the user already has a wife
+        if str(user_id) in config:
+            await bot.send(ev, '你已经有了新老婆，过去的就让它过去吧',
+                           at_sender=True)
+            return
+    # 满足交换条件，添加进交换请求列表中
+    exchange_manager.insert_exchange_request(group_id, user_id, target_id)
+    if ntr_back:
         # 牛老婆次数减少2次
         ntr_lmt.increase(f"{user_id}_{group_id}", 2)
         # 删除双方老婆信息，将他人老婆信息改成自己的
