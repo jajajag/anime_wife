@@ -80,12 +80,12 @@ ntr_lmt= DailyNumberLimiter(_ntr_max)
 #ntr_max_notice = f'为防止牛头人泛滥，一天最多可牛{_ntr_max}次（无保底），若需添加更多请使用 来杯咖啡 联系维护组'
 ntr_max_notice = f'为防止牛头人泛滥，一天最多可牛{_ntr_max}次（无保底）'
 # 牛老婆的成功率
-ntr_possibility = 0.5
+ntr_possibility = 2.0 / 3
 
 sv_help = '''
 [抽老婆] 看看今天的二次元老婆是谁
 [交换老婆] @某人 + 交换老婆
-[牛老婆] 50%概率牛到别人老婆(1次/日)
+[牛老婆] 2/3概率牛到别人老婆(1次/日)
 [查老婆] 加@某人可以查别人老婆
 [重置牛老婆] 加@某人可以重置别人牛的次数
 [跟你爆了] 消耗2条命抢回自己被牛走的老婆，且不补偿对方次数
@@ -514,11 +514,18 @@ async def ntr_wife_helper(bot, ev: CQEvent, ntr_back=False):
         target_wife_name = target_wife.split('.')[0]
         # Check the db if the wife is ntred from the user
         cursor, conn = open_db_history()
+        '''
         cursor.execute("""
             SELECT 1 FROM wife_history
             WHERE date = ? AND wife_name = ? AND group_id = ?
             AND wife_type = 'ntr' AND user_id = ? AND target_id = ?
         """, (today, target_wife_name, group_id, target_id, user_id))
+        '''
+        cursor.execute("""
+            SELECT 1 FROM wife_history
+            WHERE date = ? AND wife_name = ? AND group_id = ?
+            AND (wife_type IN ('gacha', 'exchange') AND user_id = ?)
+        """, (today, target_wife_name, group_id, user_id))
         result = cursor.fetchone()
         # Close db
         conn.close()
