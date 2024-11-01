@@ -569,7 +569,7 @@ async def ntr_wife(bot, ev: CQEvent):
     await ntr_wife_helper(bot, ev, ntr_back=False)
 
 # JAG: 牛回本属于你的老婆
-@sv.on_rex(r'^((md)?(和|跟)你爆了)|((md)?(和|跟)你爆了)$')
+@sv.on_rex(r'^((md|妈的)?(和|跟)你爆了)|((md|妈的)?(和|跟)你爆了)$')
 async def ntr_back_wife(bot, ev: CQEvent):
     await ntr_wife_helper(bot, ev, ntr_back=True)
 
