@@ -92,6 +92,7 @@ sv_help = '''
 [交换老婆] @某人 + 交换老婆(2次/日)
 [牛老婆] 2/3概率牛到别人老婆(1次/日)
 [查老婆] 加@某人可以查别人老婆
+[查新] @某人查别人的老婆是否没出过
 [重置牛老婆] 加@某人可以重置别人牛的次数
 [跟你爆了] 消耗2条命抢回自己被牛走的老婆，且不补偿对方次数
 [复活吧我的爱人] 复活上一次被牛走的老婆
@@ -145,9 +146,9 @@ async def animewife(bot, ev: CQEvent):
                 # 如果不是今天的信息，删除该用户信息重新获取老婆信息
                 del config[str(user_id)]
     
+    result = ''
     # 如果没有老婆信息，则进行随机选择
     if wife_name is None:
-        result = None
         if config != None:
             # 删除不是今天的所有老婆信息
             for record_id in list(config):
@@ -155,15 +156,15 @@ async def animewife(bot, ev: CQEvent):
                     del config[record_id]
         # 随机选择一张老婆的图片，用于获取图片名
         wife_name = random.choice(os.listdir(imgpath))
+        # JAG: Check if the wife is new
+        result += check_new(group_id, user_id, wife_name)
         # JAG: Gacha wife history
         write_db_history('gacha', 
                          user_id, 0, group_id, wife_name.split('.')[0], today)
     # 分割文件名和扩展名，只取图片名返回给用户
     name = wife_name.split('.')
     # 生成返回结果
-    result = f'你今天的二次元老婆是{name[0]}哒~\n'
-    # JAG: Check if the wife is new
-    result = check_new(group_id, user_id, wife_name) + result
+    result += f'你今天的二次元老婆是{name[0]}哒~\n'
     try:
         # 尝试读取老婆图片，并添加到结果中
         wifeimg = R.img(f'wife/{wife_name}').cqcode
@@ -666,7 +667,7 @@ async def switch_ntr(bot, ev: CQEvent):
 @sv.on_rex(r'^(查新)|(查新)$')
 async def search_new(bot, ev: CQEvent):
     # 获取QQ群、群用户QQ信息
-    group_id = str(ev.group_id)
+    group_id, user_id = str(ev.group_id), str(ev.user_id)
     target_id, wife_name = None, None
     today = str(datetime.date.today())
     # 提取目标用户的QQ号
@@ -691,7 +692,7 @@ async def search_new(bot, ev: CQEvent):
             await bot.finish(ev, '未找到老婆信息！', at_sender=True)
     else:
         await bot.finish(ev, '群婚姻信息不存在！', at_sender=True)
-    result = check_new(group_id, target_id, wife_name)
+    result = check_new(group_id, user_id, wife_name)
     result = '不是新老婆哦！' if not result else result.strip()
     await bot.send(ev, result, at_sender=True)
 
