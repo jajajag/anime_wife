@@ -68,28 +68,26 @@ def write_db_history(wife_type, user_id, target_id, group_id, wife_name, date):
 imgpath = os.path.join(os.path.expanduser(RES_DIR), 'img', 'wife')
 
 # 群管理员每天可添加老婆的次数
-_max=0
-mlmt= DailyNumberLimiter(_max)
+_max = 0
+mlmt = DailyNumberLimiter(_max)
 # 当超出次数时的提示
 max_notice = f'为防止滥用，管理员一天最多可添加{_max}次。'
 
 # 每人每天可牛老婆的次数
-_ntr_max=1
-ntr_lmt= DailyNumberLimiter(_ntr_max)
+_ntr_max = 1
+ntr_lmt = DailyNumberLimiter(_ntr_max)
 # 当超出次数时的提示
 ntr_max_notice = f'为防止牛头人泛滥，一天最多可牛{_ntr_max}次（无保底）'
 # 牛老婆的成功率
 ntr_possibility = 2.0 / 3
 
-# 没人每天可换老婆的次数
-_ex_max=2
-ex_lmt= DailyNumberLimiter(_ex_max)
-# 当超出次数时的提示
-ex_max_notice = f'为防止换妻泛滥，一天最多可换{_ex_max}次。'
+# 每人每天可换老婆的次数
+_ex_max = 5
+ex_lmt = DailyNumberLimiter(_ex_max)
 
 sv_help = '''
 [抽老婆] 看看今天的二次元老婆是谁
-[交换老婆] @某人 + 交换老婆(2次/日)
+[交换老婆] @某人 + 交换老婆(5次/日)
 [牛老婆] 2/3概率牛到别人老婆(1次/日)
 [查老婆] 加@某人可以查别人老婆
 [查新] @某人查别人的老婆是否没出过
@@ -312,10 +310,13 @@ async def exchange_wife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQ信息
     group_id = ev.group_id
     user_id = ev.user_id
+
     # JAG: Check exchange limit
     if not ex_lmt.check(f"{user_id}_{group_id}"):
-        await bot.send(ev, ex_max_notice, at_sender=True)
-        return
+        await bot.finish(ev, '已达到每日交换上限', at_sender=True)
+    # JAG: Increase exchange limit by 1
+    ex_lmt.increase(f"{user_id}_{group_id}")
+
     target_id = None
     today = str(datetime.date.today())
     # 获取用户和目标用户的配置信息
@@ -396,8 +397,6 @@ async def handle_ex_wife(user_id, target_id, group_id, agree = False):
                          target_wife.split('.')[0], today)
         write_db_history('exchange', target_id, user_id, group_id, 
                          user_wife.split('.')[0], today)
-        # JAG: Increase exchange limit by 1
-        ex_lmt.increase(f"{user_id}_{group_id}")
     # 删除exchange_manager中对应的请求用户对记录
     exchange_manager.remove_exchange_request(group_id, user_id, target_id)
     # 取消超时任务
