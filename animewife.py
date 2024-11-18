@@ -349,7 +349,8 @@ async def exchange_wife(bot, ev: CQEvent):
                          at_sender=True)
     # JAG: Check exchange limit
     if not ex_lmt.check(f"{user_id}_{group_id}"):
-        await bot.finish(ev, f'已达到每日交换上限({_ex_max}次)', at_sender=True)
+        await bot.finish(ev, f'已达到每日交换上限（{_ex_max}次）', 
+                         at_sender=True)
     # JAG: Increase exchange limit by 1
     ex_lmt.increase(f"{user_id}_{group_id}")
 
