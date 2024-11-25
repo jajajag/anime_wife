@@ -85,6 +85,9 @@ ntr_possibility = 2.0 / 3
 _ex_max = 5
 ex_lmt = DailyNumberLimiter(_ex_max)
 
+# JAG: 检查新老婆的提示
+_check_new_notice = '是新老婆哦！'
+
 sv_help = '''
 [抽老婆] 看看今天的二次元老婆是谁
 [交换老婆] @某人 + 交换老婆(5次/日)
@@ -121,7 +124,7 @@ def check_new(group_id, user_id, wife_name):
     result = cursor.fetchone()[0]
     conn.close()
     # Return a str if the wife is new
-    return '\n是新老婆哦！' if not result else ''
+    return f'\n{_check_new_notice}' if not result else ''
 
 @sv.on_fullmatch('抽老婆')
 async def animewife(bot, ev: CQEvent):
@@ -671,7 +674,7 @@ async def search_new(bot, ev: CQEvent):
     else:
         await bot.finish(ev, '群婚姻信息不存在！', at_sender=True)
     result = check_new(group_id, user_id, wife_name).strip()
-    result = f'不{result}' if not result else result
+    result = f'不{_check_new_notice}' if not result else result
     await bot.send(ev, result, at_sender=True)
 
 ########### 查看别人老婆 ##############
