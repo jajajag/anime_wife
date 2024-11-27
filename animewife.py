@@ -680,12 +680,11 @@ async def search_wife(bot, ev: CQEvent):
     nick_name = member_info['card'] or member_info['nickname'] \
             or member_info['user_id'] or '未找到对方id'
     result = f'{str(nick_name)}的二次元老婆是{name[0]}哒~\n'
-    # JAG: Check if the wife is new
-    result = result + check_new(group_id, ev.user_id, wife_name)
     try:
         # 尝试读取老婆图片，并添加到结果中
         wifeimg = R.img(f'wife/{wife_name}').cqcode
-        result += str(wifeimg)
+        # JAG: Also check if the wife is new
+        result += str(wifeimg) + check_new(group_id, ev.user_id, wife_name)
     except Exception as e:
         hoshino.logger.error(f'读取老婆图片时发生错误{type(e)}')
         await bot.finish(ev, '读取老婆图片时发生错误', at_sender=True)
