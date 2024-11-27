@@ -120,7 +120,7 @@ def check_new(group_id, user_id, wife_name):
     result = cursor.fetchone()[0]
     conn.close()
     # Return a str if the wife is new
-    return f'\n{_check_new_notice}' if not result else ''
+    return f'\n是新老婆哦！' if not result else ''
 
 @sv.on_fullmatch('抽老婆')
 async def animewife(bot, ev: CQEvent):
