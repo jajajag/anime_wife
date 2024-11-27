@@ -681,7 +681,7 @@ async def search_wife(bot, ev: CQEvent):
             or member_info['user_id'] or '未找到对方id'
     result = f'{str(nick_name)}的二次元老婆是{name[0]}哒~\n'
     # JAG: Check if the wife is new
-    result = result + check_new(group_id, user_id, wife_name)
+    result = result + check_new(group_id, ev.user_id, wife_name)
     try:
         # 尝试读取老婆图片，并添加到结果中
         wifeimg = R.img(f'wife/{wife_name}').cqcode
