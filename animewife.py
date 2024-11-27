@@ -85,15 +85,11 @@ ntr_possibility = 2.0 / 3
 _ex_max = 5
 ex_lmt = DailyNumberLimiter(_ex_max)
 
-# JAG: 检查新老婆的提示
-_check_new_notice = '是新老婆哦！'
-
 sv_help = '''
 [抽老婆] 看看今天的二次元老婆是谁
 [交换老婆] @某人 + 交换老婆(5次/日)
 [牛老婆] 2/3概率牛到别人老婆(1次/日)
 [查老婆] 加@某人可以查别人老婆
-[查新] @某人查别人的老婆是否没出过
 [重置牛老婆] 加@某人可以重置别人牛的次数
 [跟你爆了] 消耗2条命抢回自己被牛走的老婆，且不补偿对方次数
 [复活吧我的爱人] 复活上一次被牛走的老婆
@@ -644,39 +640,6 @@ async def switch_ntr(bot, ev: CQEvent):
     # 提示信息
     await bot.send(ev, 'NTR功能已' + ('开启' if ntr_statuses[group_id] else '关闭'), at_sender=True)
     
-
-@sv.on_rex(r'^(查新)|(查新)$')
-async def search_new(bot, ev: CQEvent):
-    # 获取QQ群、群用户QQ信息
-    group_id, user_id = str(ev.group_id), str(ev.user_id)
-    target_id, wife_name = None, None
-    today = str(datetime.date.today())
-    # 提取目标用户的QQ号
-    for seg in ev.message:
-        if seg.type == 'at' and seg.data['qq'] != 'all':
-            target_id = int(seg.data['qq'])
-            break
-    # 如果没指定就是自己
-    if not target_id:
-        await bot.finish(ev, '不能查自己', at_sender=True)
-    # 获取用户和目标用户的配置信息
-    config = load_group_config(group_id)
-    if config is not None:
-        # Making sure we're comparing strings with strings,
-        # or integers with integers
-        if str(target_id) in config:  
-            if config[str(target_id)][1] == today:
-                wife_name = config[str(target_id)][0]
-            else:
-                await bot.finish(ev, '查询的老婆已过期', at_sender=True)
-        else:
-            await bot.finish(ev, '未找到老婆信息！', at_sender=True)
-    else:
-        await bot.finish(ev, '群婚姻信息不存在！', at_sender=True)
-    result = check_new(group_id, user_id, wife_name).strip()
-    result = f'不{_check_new_notice}' if not result else result
-    await bot.send(ev, result, at_sender=True)
-
 ########### 查看别人老婆 ##############
 
 @sv.on_rex(r'^(查老婆)|(查老婆)$')
@@ -717,6 +680,8 @@ async def search_wife(bot, ev: CQEvent):
     nick_name = member_info['card'] or member_info['nickname'] \
             or member_info['user_id'] or '未找到对方id'
     result = f'{str(nick_name)}的二次元老婆是{name[0]}哒~\n'
+    # JAG: Check if the wife is new
+    result = result + check_new(group_id, user_id, wife_name)
     try:
         # 尝试读取老婆图片，并添加到结果中
         wifeimg = R.img(f'wife/{wife_name}').cqcode
