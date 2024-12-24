@@ -769,11 +769,13 @@ async def wife_stats(bot, ev: CQEvent):
         try:
             member_info = await bot.get_group_member_info(
                     self_id=ev.self_id, group_id=ev.group_id, user_id=result[0])
+            most_ntr_user = member_info['card'] or member_info['nickname'] \
+                    or member_info['user_id'] or '未找到对方id'
         except:
             # The member may no longer be in the group
             member_info = await bot.get_stranger_info(user_id=result[0])
-        most_ntr_user = member_info['card'] or member_info['nickname'] \
-            or member_info['user_id'] or '未找到对方id'
+            most_ntr_user = member_info['remark'] or member_info['nickname'] \
+                    or member_info['user_id'] or '未找到对方id'
     else:
         most_ntr_user = '？？？'
     # 10. Most ntr user count
@@ -801,11 +803,13 @@ async def wife_stats(bot, ev: CQEvent):
         try:
             member_info = await bot.get_group_member_info(
                     self_id=ev.self_id, group_id=ev.group_id, user_id=result[0])
+            most_ntred_user = member_info['card'] or member_info['nickname'] \
+                    or member_info['user_id'] or '未找到对方id'
         except:
             # The member may no longer be in the group
             member_info = await bot.get_stranger_info(user_id=result[0])
-        most_ntred_user = member_info['card'] or member_info['nickname'] \
-            or member_info['user_id'] or '未找到对方id'
+            most_ntred_user = member_info['remark'] or member_info['nickname'] \
+                    or member_info['user_id'] or '未找到对方id'
     else:
         most_ntred_user = '？？？'
     # 14. Most ntred user count
@@ -840,11 +844,15 @@ async def wife_stats(bot, ev: CQEvent):
         try:
             member_info = await bot.get_group_member_info(
                     self_id=ev.self_id, group_id=ev.group_id, user_id=result[0])
+            most_exchange_user = member_info['card'] \
+                    or member_info['nickname'] or member_info['user_id'] \
+                    or '未找到对方id'
         except:
             # The member may no longer be in the group
             member_info = await bot.get_stranger_info(user_id=result[0])
-        most_exchange_user = member_info['card'] or member_info['nickname'] \
-            or member_info['user_id'] or '未找到对方id'
+            most_exchange_user = member_info['remark'] \
+                    or member_info['nickname'] or member_info['user_id'] \
+                    or '未找到对方id'
     else:
         most_exchange_user = '？？？'
     # 19. Most exchange user count
