@@ -765,13 +765,16 @@ async def wife_stats(bot, ev: CQEvent):
         GROUP BY target_id ORDER BY cnt DESC LIMIT 1
     """, (group_id, user_id))
     result = cursor.fetchone()
-    # The member may no longer be in the group
-    try:
-        member_info = await bot.get_group_member_info(
-                self_id=ev.self_id, group_id=ev.group_id, user_id=result[0])
+    if result:
+        try:
+            member_info = await bot.get_group_member_info(
+                    self_id=ev.self_id, group_id=ev.group_id, user_id=result[0])
+        except:
+            # The member may no longer be in the group
+            member_info = await bot.get_stranger_info(user_id=result[0])
         most_ntr_user = member_info['card'] or member_info['nickname'] \
             or member_info['user_id'] or '未找到对方id'
-    except:
+    else:
         most_ntr_user = '？？？'
     # 10. Most ntr user count
     most_ntr_user_count = result[1] if result else 0
@@ -794,13 +797,16 @@ async def wife_stats(bot, ev: CQEvent):
         GROUP BY user_id ORDER BY cnt DESC LIMIT 1
     """, (group_id, user_id))
     result = cursor.fetchone()
-    # The member may no longer be in the group
-    try:
-        member_info = await bot.get_group_member_info(
-                self_id=ev.self_id, group_id=ev.group_id, user_id=result[0])
+    if result:
+        try:
+            member_info = await bot.get_group_member_info(
+                    self_id=ev.self_id, group_id=ev.group_id, user_id=result[0])
+        except:
+            # The member may no longer be in the group
+            member_info = await bot.get_stranger_info(user_id=result[0])
         most_ntred_user = member_info['card'] or member_info['nickname'] \
             or member_info['user_id'] or '未找到对方id'
-    except:
+    else:
         most_ntred_user = '？？？'
     # 14. Most ntred user count
     most_ntred_user_count = result[1] if result else 0
@@ -830,13 +836,16 @@ async def wife_stats(bot, ev: CQEvent):
         GROUP BY target_id ORDER BY cnt DESC LIMIT 1
     """, (group_id, user_id))
     result = cursor.fetchone()
-    # The member may no longer be in the group
-    try:
-        member_info = await bot.get_group_member_info(
-                self_id=ev.self_id, group_id=ev.group_id, user_id=result[0])
+    if result:
+        try:
+            member_info = await bot.get_group_member_info(
+                    self_id=ev.self_id, group_id=ev.group_id, user_id=result[0])
+        except:
+            # The member may no longer be in the group
+            member_info = await bot.get_stranger_info(user_id=result[0])
         most_exchange_user = member_info['card'] or member_info['nickname'] \
             or member_info['user_id'] or '未找到对方id'
-    except:
+    else:
         most_exchange_user = '？？？'
     # 19. Most exchange user count
     most_exchange_user_count = result[1] if result else 0
