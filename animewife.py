@@ -765,12 +765,13 @@ async def wife_stats(bot, ev: CQEvent):
         GROUP BY target_id ORDER BY cnt DESC LIMIT 1
     """, (group_id, user_id))
     result = cursor.fetchone()
-    if result:
+    # The member may no longer be in the group
+    try:
         member_info = await bot.get_group_member_info(
                 self_id=ev.self_id, group_id=ev.group_id, user_id=result[0])
         most_ntr_user = member_info['card'] or member_info['nickname'] \
             or member_info['user_id'] or '未找到对方id'
-    else:
+    except:
         most_ntr_user = '？？？'
     # 10. Most ntr user count
     most_ntr_user_count = result[1] if result else 0
@@ -793,12 +794,13 @@ async def wife_stats(bot, ev: CQEvent):
         GROUP BY user_id ORDER BY cnt DESC LIMIT 1
     """, (group_id, user_id))
     result = cursor.fetchone()
-    if result:
+    # The member may no longer be in the group
+    try:
         member_info = await bot.get_group_member_info(
                 self_id=ev.self_id, group_id=ev.group_id, user_id=result[0])
         most_ntred_user = member_info['card'] or member_info['nickname'] \
             or member_info['user_id'] or '未找到对方id'
-    else:
+    except:
         most_ntred_user = '？？？'
     # 14. Most ntred user count
     most_ntred_user_count = result[1] if result else 0
