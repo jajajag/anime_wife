@@ -903,3 +903,8 @@ async def animewife(bot, ev: CQEvent):
         await bot.send(ev, '复活吧！我的爱人！', at_sender=True)
     else:
         await bot.send(ev, '你没有老婆可以复活', at_sender=True)
+
+# 回复日老婆
+@sv.on_rex(r'^(日老婆)|(日老婆)$')
+async def wife_stats(bot, ev: CQEvent):
+    await bot.send(ev, '日死你', at_sender=True)
