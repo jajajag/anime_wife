@@ -7,6 +7,53 @@ from hoshino.typing import CQEvent
 from hoshino.util import DailyNumberLimiter
 from html import unescape
 
+sv_help = '''
+[抽老婆] 看看今天的二次元老婆是谁
+[换老婆] @某人 + 交换老婆(5次/日)
+[牛老婆] 2/3概率牛到别人老婆(1次/日)
+[查老婆] 加@某人可以查别人老婆(5次/日)
+[跟你爆了] 消耗2条命抢回自己被牛走的老婆，且不补偿对方次数
+[复活吧我的爱人] 复活上一次被牛走的老婆
+[老婆档案] 加@某人可以查看别人的老婆档案
+[重置牛老婆] 加@某人可以重置别人牛的次数
+[切换ntr开关状态]
+'''.strip()
+
+sv = Service(
+    name = '抽老婆',  #功能名
+    use_priv = priv.NORMAL, #使用权限   
+    manage_priv = priv.ADMIN, #管理权限
+    visible = True, #可见性
+    enable_on_default = True, #默认启用
+    bundle = '娱乐', #分组归类
+    help_ = sv_help #帮助说明
+)
+
+# 图片路径
+imgpath = os.path.join(os.path.expanduser(RES_DIR), 'img', 'wife')
+
+# 群管理员每天可添加老婆的次数
+_max = 0
+mlmt = DailyNumberLimiter(_max)
+# 当超出次数时的提示
+max_notice = f'为防止滥用，管理员一天最多可添加{_max}次。'
+
+# 每人每天可牛老婆的次数
+_ntr_max = 1
+ntr_lmt = DailyNumberLimiter(_ntr_max)
+# 当超出次数时的提示
+ntr_max_notice = f'为防止牛头人泛滥，一天最多可牛{_ntr_max}次（无保底）'
+# 牛老婆的成功率
+ntr_possibility = 2.0 / 3
+
+# 每人每天可换老婆的次数
+_ex_max = 5
+ex_lmt = DailyNumberLimiter(_ex_max)
+
+# 每人每天可查别人老婆的次数
+_sc_max = 5
+sc_lmt = DailyNumberLimiter(_sc_max)
+
 # 加载json数据
 def load_group_config(group_id: str) -> int:
     filename = os.path.join(os.path.dirname(__file__), 
@@ -63,49 +110,6 @@ def write_db_history(wife_type, user_id, target_id, group_id, wife_name, date):
                                 group_id, wife_name, date))
     conn.commit()
     conn.close()
-
-# 图片路径
-imgpath = os.path.join(os.path.expanduser(RES_DIR), 'img', 'wife')
-
-# 群管理员每天可添加老婆的次数
-_max = 0
-mlmt = DailyNumberLimiter(_max)
-# 当超出次数时的提示
-max_notice = f'为防止滥用，管理员一天最多可添加{_max}次。'
-
-# 每人每天可牛老婆的次数
-_ntr_max = 1
-ntr_lmt = DailyNumberLimiter(_ntr_max)
-# 当超出次数时的提示
-ntr_max_notice = f'为防止牛头人泛滥，一天最多可牛{_ntr_max}次（无保底）'
-# 牛老婆的成功率
-ntr_possibility = 2.0 / 3
-
-# 每人每天可换老婆的次数
-_ex_max = 5
-ex_lmt = DailyNumberLimiter(_ex_max)
-
-sv_help = '''
-[抽老婆] 看看今天的二次元老婆是谁
-[交换老婆] @某人 + 交换老婆(5次/日)
-[牛老婆] 2/3概率牛到别人老婆(1次/日)
-[查老婆] 加@某人可以查别人老婆
-[重置牛老婆] 加@某人可以重置别人牛的次数
-[跟你爆了] 消耗2条命抢回自己被牛走的老婆，且不补偿对方次数
-[复活吧我的爱人] 复活上一次被牛走的老婆
-[老婆档案] 加@某人可以查看别人的老婆档案
-[切换ntr开关状态]
-'''.strip()
-
-sv = Service(
-    name = '抽老婆',  #功能名
-    use_priv = priv.NORMAL, #使用权限   
-    manage_priv = priv.ADMIN, #管理权限
-    visible = True, #可见性
-    enable_on_default = True, #默认启用
-    bundle = '娱乐', #分组归类
-    help_ = sv_help #帮助说明
-    )
 
 # JAG: Check if the wife is new
 def check_new(group_id, user_id, wife_name):
@@ -655,6 +659,13 @@ async def search_wife(bot, ev: CQEvent):
         if seg.type == 'at' and seg.data['qq'] != 'all':
             target_id = int(seg.data['qq'])
             break
+    # JAG: Check search limit
+    if not sc_lmt.check(f"{ev.user_id}_{group_id}"):
+        await bot.finish(ev, f'已达到每日查询上限（{_sc_max}次）', 
+                     at_sender=True)
+    # JAG: Increase search limit by 1 if query other's wife
+    if not target_id:
+        sc_lmt.increase(f"{ev.user_id}_{group_id}")
     # 如果没指定就是自己
     target_id = target_id or str(ev.user_id)
     # 获取用户和目标用户的配置信息
