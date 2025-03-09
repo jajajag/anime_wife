@@ -146,7 +146,7 @@ def check_mate(group_id, user_id, wife_name):
     mate = result[0] if result else 0
     conn.close()
     # Return the #mate
-    return f'\n好感度：{mate}' if mate else 0
+    return f'\n好感度：{mate}'
 
 
 @sv.on_fullmatch('抽老婆')
