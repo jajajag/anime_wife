@@ -48,7 +48,7 @@ daily_limits = {
     'ntr': 1, # 牛老婆
     'ex': 5,  # 交换老婆
     'sc': 5,  # 查老婆
-    'div': 1  # 离婚
+    'div': 1,  # 离婚
     'mate': 1 # 日老婆
 }
 limiters = {key: DailyNumberLimiter(v) for key, v in daily_limits.items()}
