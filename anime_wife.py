@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import hoshino, random, os, re, filetype, datetime, json
 import sqlite3
 from hoshino import Service, R, priv, aiorequests
@@ -945,6 +946,7 @@ async def wife_stats(bot, ev: CQEvent):
 
 # 每行显示的老婆数量
 COL_NUM = 10
+img_cache = {}
 
 # 老婆图鉴
 # Modified from https://github.com/Rlezzo/WifeGacha/blob/master/main.py
@@ -1006,7 +1008,10 @@ async def wife_atlas(bot, ev: CQEvent):
         col_index = index % COL_NUM
         # Open image
         image_name = os.path.join(imgpath, wife_name)
-        sign_image = Image.open(image_name)
+        # Save the image to cache
+        if image_name not in img_cache:
+            img_cache[image_name] = Image.open(image_name)
+        sign_image = img_cache[image_name]
         # 图片被缩放到80x80像素，并应用抗锯齿算法
         sign_image = sign_image.resize((80, 80), Image.ANTIALIAS)
         # 如果老婆不在用户解锁的老婆列表中，则转换为灰度图像
