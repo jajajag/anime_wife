@@ -48,7 +48,8 @@ daily_limits = {
     'ntr': 1, # 牛老婆
     'ex': 5,  # 交换老婆
     'sc': 5,  # 查老婆
-    'rst': 1  # 离婚
+    'div': 1  # 离婚
+    'mate': 1 # 日老婆
 }
 limiters = {key: DailyNumberLimiter(v) for key, v in daily_limits.items()}
 
@@ -129,6 +130,23 @@ def check_new(group_id, user_id, wife_name):
     conn.close()
     # Return a str if the wife is new
     return f'\n是新老婆哦！' if not result else ''
+
+
+# JAG: Check the #mate
+def check_mate(group_id, user_id, wife_name):
+    cursor, conn = open_db_history()
+    wife_name = wife_name.split('.')[0]
+    # Check if the #mate in the history
+    cursor.execute("""
+        SELECT COUNT(*) FROM wife_history
+        WHERE group_id = ? AND user_id = ? 
+        AND wife_name = ? AND wife_type = 'mate'
+    """, (group_id, user_id, wife_name))
+    result = cursor.fetchone()
+    mate = result[0] if result else 0
+    conn.close()
+    # Return the #mate
+    return f'\n好感度：{mate}' if mate else 0
 
 
 @sv.on_fullmatch('抽老婆')
@@ -675,18 +693,22 @@ async def search_wife(bot, ev: CQEvent):
     target_id = None
     today = str(datetime.date.today())
     wife_name = None
+
     # 提取目标用户的QQ号
     for seg in ev.message:
         if seg.type == 'at' and seg.data['qq'] != 'all':
             target_id = int(seg.data['qq'])
             break
-    # JAG: Check search limit
-    if not limiters['sc'].check(f"{ev.user_id}_{group_id}"):
-        await bot.finish(ev, f'已达到每日查询上限（{daily_limits["sc"]}次）', 
-                     at_sender=True)
-    # JAG: Increase search limit by 1 if query other's wife
-    if not target_id:
+
+    # JAG: Check if there is a target
+    is_target = target_id is not None
+    # JAG: Check search limit if the user is querying other's wife
+    if is_target:
+        if not limiters['sc'].check(f"{ev.user_id}_{group_id}"):
+            await bot.finish(ev,
+                f'已达到每日查询上限（{daily_limits["sc"]}次）', at_sender=True)
         limiters['sc'].increase(f"{ev.user_id}_{group_id}")
+
     # 如果没指定就是自己
     target_id = target_id or str(ev.user_id)
     # 获取用户和目标用户的配置信息
@@ -712,14 +734,19 @@ async def search_wife(bot, ev: CQEvent):
     nick_name = member_info['card'] or member_info['nickname'] \
             or member_info['user_id'] or '未找到对方id'
     result = f'{str(nick_name)}的二次元老婆是{name[0]}哒~\n'
+
     try:
         # 尝试读取老婆图片，并添加到结果中
         wifeimg = R.img(f'wife/{wife_name}').cqcode
-        # JAG: Also check if the wife is new
-        result += str(wifeimg) + check_new(group_id, ev.user_id, wife_name)
+        # JAG: Check if the wife is new if the user is querying other's wife
+        if is_target:
+            result += str(wifeimg) + check_new(group_id, ev.user_id, wife_name)
+        else:
+            result += str(wifeimg) + check_mate(group_id, ev.user_id, wife_name)
     except Exception as e:
         hoshino.logger.error(f'读取老婆图片时发生错误{type(e)}')
         await bot.finish(ev, '读取老婆图片时发生错误', at_sender=True)
+
     # 发送消息
     await bot.send(ev,result,at_sender=True)
 
@@ -890,6 +917,46 @@ async def wife_stats(bot, ev: CQEvent):
         most_exchange_user = '？？？'
     # 19. Most exchange user count
     most_exchange_user_count = result[1] if result else 0
+
+    # 20. Total #wife divorced
+    cursor.execute("""
+        SELECT COUNT(*) FROM wife_history
+        WHERE wife_type = 'divorce' AND group_id = ? AND user_id = ?
+    """, (group_id, user_id))
+    result = cursor.fetchone()
+    divorce_count = result[0] if result else 0
+
+    # 21. Most wife divorced
+    cursor.execute("""
+        SELECT wife_name, COUNT(*) as cnt FROM wife_history
+        WHERE wife_type = 'divorce' AND group_id = ? AND user_id = ?
+        GROUP BY wife_name ORDER BY cnt DESC LIMIT 1
+    """, (group_id, user_id))
+    result = cursor.fetchone()
+    most_divorce_wife = result[0] if result else '？？？'
+    # 22. Most divorced wife count
+    most_divorce_wife_count = result[1] if result else 0
+
+    # 23. Total #wife mated
+    cursor.execute("""
+        SELECT COUNT(*) FROM wife_history
+        WHERE wife_type = 'mate' AND group_id = ? AND user_id = ?
+    """, (group_id, user_id))
+    result = cursor.fetchone()
+    mate_count = result[0] if result else 0
+
+    # 24. Most wife mated
+    cursor.execute("""
+        SELECT wife_name, COUNT(*) as cnt FROM wife_history
+        WHERE wife_type = 'mate' AND group_id = ? AND user_id = ?
+        GROUP BY wife_name ORDER BY cnt DESC LIMIT 1
+    """, (group_id, user_id))
+    result = cursor.fetchone()
+    most_mate_wife = result[0] if result else '？？？'
+    # 25. Most mated wife count
+    most_mate_wife_count = result[1] if result else 0
+
+    # Close db
     #conn.commit()
     conn.close()
 
@@ -897,14 +964,19 @@ async def wife_stats(bot, ev: CQEvent):
     ret += f'- 总共解锁的老婆：{collected_count}/{total_count}位\n'
     ret += f'- 总共抽过的老婆：{gacha_count}次\n'
     ret += f'- 抽到最多的老婆：{most_gacha_wife}({most_gacha_wife_count}次)\n'
+    ret += f'- 总共离过的老婆：{divorce_count}次\n'
+    ret += f'- 离婚最多的老婆：{most_divorce_wife}({most_divorce_wife_count}次)\n'
     ret += f'- 总共牛过的老婆：{ntr_count}次\n'
     ret += f'- 最喜欢牛的老婆：{most_ntr_wife}({most_ntr_wife_count}次)\n'
     ret += f'- 最喜欢牛的群友：@{most_ntr_user}({most_ntr_user_count}次)\n'
     ret += f'- 被牛最多的老婆：{most_ntred_wife}({most_ntred_wife_count}次)\n'
     ret += f'- 被牛最多的群友：@{most_ntred_user}({most_ntred_user_count}次)\n'
+    ret += f'- 总共日过的老婆：{mate_count}次\n'
+    ret += f'- 最喜欢日的老婆：{most_mate_wife}({most_mate_wife_count}次)\n'
     ret += f'- 总共换过的老婆：{exchange_count}次\n'
     ret += f'- 最喜欢换的老婆：{most_exchange_wife}({most_exchange_wife_count}次)\n'
     ret += f'- 最喜欢换的群友：@{most_exchange_user}({most_exchange_user_count}次)'
+
     await bot.send(ev, ret, at_sender=False)
 
 # JAG: 复活被牛走的老婆
@@ -936,12 +1008,6 @@ async def animewife(bot, ev: CQEvent):
         await bot.send(ev, '复活吧！我的爱人！', at_sender=True)
     else:
         await bot.send(ev, '你没有老婆可以复活', at_sender=True)
-
-
-# 回复日老婆
-@sv.on_rex(r'^(日老婆)|((?<!今)日老婆)$')
-async def wife_stats(bot, ev: CQEvent):
-    await bot.send(ev, '日死你', at_sender=True)
 
 
 # 每行显示的老婆数量
@@ -1036,7 +1102,7 @@ async def wife_atlas(bot, ev: CQEvent):
 
 
 @sv.on_fullmatch('离婚')
-async def reset_wife(bot, ev: CQEvent):
+async def divorce_wife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQid
     group_id = ev.group_id
     user_id = ev.user_id
@@ -1053,16 +1119,52 @@ async def reset_wife(bot, ev: CQEvent):
     if config[str(user_id)][1] != today:
         await bot.finish(ev, '你的老婆已过期', at_sender=True)
     # JAG: Check reset limit
-    if not limiters['rst'].check(f"{user_id}_{group_id}"):
+    if not limiters['div'].check(f"{user_id}_{group_id}"):
         await bot.finish(ev,
-            f'为防止渣男泛滥，一天最多可离婚{daily_limits["rst"]}次',
+            f'为防止渣男泛滥，一天最多可离婚{daily_limits["div"]}次',
             at_sender=True)
-    limiters['rst'].increase(f"{user_id}_{group_id}")
+    limiters['div'].increase(f"{user_id}_{group_id}")
 
     # 删除用户的老婆信息
     wife_name = config[str(user_id)][0]
     wife_name = wife_name.split('.')[0]
     config.pop(str(user_id), None)
     write_group_config(group_id, user_id, None, None, config)
+
+    # JAG: Write divorce history to db
+    write_db_history('divorce', user_id, 0, group_id, wife_name, today)
+
+    await bot.send(ev, f'你与{wife_name}解除婚姻成功', at_sender=True)
+
+
+@sv.on_fullmatch('日老婆')
+async def mate_wife(bot, ev: CQEvent):
+    # 获取QQ群、群用户QQid
+    group_id = ev.group_id
+    user_id = ev.user_id
+    # 获取今天的日期，转换为字符串格式
+    today = str(datetime.date.today())
+    # 载入群组信息
+    config = load_group_config(group_id)
+
+    # Regular checks, the same as in search_wife()
+    if config is None:
+        await bot.finish(ev, '没有找到本群婚姻登记信息', at_sender=True)
+    if str(user_id) not in config:
+        await bot.finish(ev, '未找到老婆信息！', at_sender=True)
+    if config[str(user_id)][1] != today:
+        await bot.finish(ev, '你的老婆已过期', at_sender=True)
+    # JAG: Check reset limit
+    if not limiters['mate'].check(f"{user_id}_{group_id}"):
+        await bot.finish(ev,
+            f'劲酒虽好，可不要贪杯哦。一天最多可日{daily_limits["mate"]}次',
+            at_sender=True)
+    limiters['mate'].increase(f"{user_id}_{group_id}")
+
+    # Get wife name
+    wife_name = config[str(user_id)][0]
+    wife_name = wife_name.split('.')[0]
+    # JAG: Write mate history to db
+    write_db_history('mate', user_id, 0, group_id, wife_name, today)
 
     await bot.send(ev, f'你与{wife_name}解除婚姻成功', at_sender=True)
