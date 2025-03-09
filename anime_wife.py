@@ -1050,7 +1050,7 @@ async def reset_wife(bot, ev: CQEvent):
     limiters['rst'].increase(f"{user_id}_{group_id}")
 
     # 删除用户的老婆信息
-    wife_name = config[str(target_id)][0]
+    wife_name = config[str(user_id)][0]
     wife_name = wife_name.split('.')[0]
     write_group_config(group_id, user_id, None, None, config)
 
