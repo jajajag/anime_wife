@@ -69,13 +69,11 @@ def write_group_config(group_id: str, link_id:str, wife_name:str, date:str,
                        config) -> int:
     config_file = os.path.join(os.path.dirname(__file__), 
                                'config', f'{group_id}.json')
-    if config is not None:    
-        if wife_name is not None and date is not None:
-            config[link_id] = [wife_name, date]
-        else:
-            config.pop(link_id, None)
+    # JAG: Make sure all parameters are not None
+    if all(x is not None for x in (config, wife_name, date)):
+        config[link_id] = [wife_name, date]
     else:
-        config = {link_id:[wife_name, date]}
+        config = {link_id : [wife_name, date]}
     with open(config_file, 'w', encoding='utf-8') as f:
         json.dump(config, f, ensure_ascii=False)
 
@@ -1052,6 +1050,7 @@ async def reset_wife(bot, ev: CQEvent):
     # 删除用户的老婆信息
     wife_name = config[str(user_id)][0]
     wife_name = wife_name.split('.')[0]
+    config.pop(str(user_id), None)
     write_group_config(group_id, user_id, None, None, config)
 
     await bot.send(ev, f'你与{wife_name}解除婚姻成功', at_sender=True)
