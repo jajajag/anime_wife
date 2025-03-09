@@ -1031,6 +1031,10 @@ async def reset_wife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQid
     group_id = ev.group_id
     user_id = ev.user_id
+    # 获取今天的日期，转换为字符串格式
+    today = str(datetime.date.today())
+    # 载入群组信息
+    config = load_group_config(group_id)
 
     # Regular checks, the same as in search_wife()
     if config is None:
@@ -1046,6 +1050,8 @@ async def reset_wife(bot, ev: CQEvent):
     limiters['rst'].increase(f"{user_id}_{group_id}")
 
     # 删除用户的老婆信息
+    wife_name = config[str(target_id)][0]
+    wife_name = wife_name.split('.')[0]
     write_group_config(group_id, user_id, None, None, config)
 
-    bot.send(ev, '你与解除婚姻成功', at_sender=True)
+    bot.send(ev, f'你与{wife_name}解除婚姻成功', at_sender=True)
