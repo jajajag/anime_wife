@@ -995,9 +995,9 @@ async def wife_atlas(bot, ev: CQEvent):
             os.path.dirname(__file__), 'config', 'frame.png')
     base_img = Image.open(base_img_path)
     # 调整图像大小:
-    base_img = base.resize((40 + COL_NUM * 80 + (COL_NUM - 1) * 10, 
-                        150 + row_num * 80 + (row_num - 1) * 10),
-                       Image.ANTIALIAS)
+    base_img = base_img.resize((40 + COL_NUM * 80 + (COL_NUM - 1) * 10, 
+                                150 + row_num * 80 + (row_num - 1) * 10),
+                                Image.ANTIALIAS)
     # 初始化行索引偏移和行偏移:
     row_index_offset, row_offset = 0, 0
 
