@@ -479,11 +479,15 @@ async def ex_wife_reply(bot, ev: CQEvent):
 
 
 # 重置牛老婆次数限制
-@sv.on_rex(r'^(重置牛老婆)|(重置牛老婆)$')
+#@sv.on_rex(r'^(重置牛老婆)|(重置牛老婆)$')
+@sv.on_rex(r'^(重置(牛老婆|日老婆|离婚))$|(重置(牛老婆|日老婆|离婚))$')
 async def reset_ntr_wife(bot, ev: CQEvent):
     # 获取QQ信息
     user_id = ev.user_id
     group_id = ev.group_id
+    # JAG: Get keyword from regex match
+    match = ev['match']
+    keyword = match.group(2)
     # 此注释的代码是仅限bot超级管理员使用，
     # 有需可启用并将下面判断权限的代码注释掉
     if user_id not in hoshino.config.SUPERUSERS:
@@ -504,7 +508,12 @@ async def reset_ntr_wife(bot, ev: CQEvent):
     target_id = target_id if target_id else user_id
     #limiters['ntr'].reset(f"{target_id}_{group_id}")
     # JAG: Change reset to increment by 1
-    limiters['ntr'].increase(f"{target_id}_{group_id}", -1)
+    if keyword == '牛老婆':
+        limiters['ntr'].increase(f"{target_id}_{group_id}", -1)
+    elif keyword == '日老婆':
+        limiters['mate'].increase(f"{target_id}_{group_id}", -1)
+    elif keyword == '离婚':
+        limiters['div'].increase(f"{target_id}_{group_id}", -1)
     await bot.send(ev, "已重置次数")
     
 
