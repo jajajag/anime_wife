@@ -1167,4 +1167,5 @@ async def mate_wife(bot, ev: CQEvent):
     # JAG: Write mate history to db
     write_db_history('mate', user_id, 0, group_id, wife_name, today)
 
-    await bot.send(ev, f'你与{wife_name}解除婚姻成功', at_sender=True)
+    await bot.send(ev, f'你与{wife_name}进行了深入交流，好感度+1', 
+                   at_sender=True)
