@@ -1018,7 +1018,7 @@ async def wife_atlas(bot, ev: CQEvent):
 
     row_offset += 30
     buf = BytesIO()
-    base_img = base.convert('RGB')
+    base_img = base_img.convert('RGB')
     base_img.save(buf, format='JPEG')
     base64_str = f'base64://{base64.b64encode(buf.getvalue()).decode()}'
     messages = f'@{user_name}的老婆图鉴：'
