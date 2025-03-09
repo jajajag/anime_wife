@@ -982,7 +982,7 @@ async def wife_atlas(bot, ev: CQEvent):
     drawn_wives_count = len(unique_wives)
 
     # 获取老婆总数
-    wives_names = os.listdir(imgpath)
+    wives_names = [f for f in os.listdir(imgpath) if '.' in f]
     total_wives_count = len(wives_names)
     len_card = total_wives_count
 
@@ -1047,8 +1047,9 @@ async def reset_wife(bot, ev: CQEvent):
         await bot.finish(ev, '你的老婆已过期', at_sender=True)
     # JAG: Check reset limit
     if not limiters['rst'].check(f"{user_id}_{group_id}"):
-        await bot.finish(ev, f'每日仅允许离婚{daily_limits["rst"]}次',
-                         at_sender=True)
+        await bot.finish(ev,
+            f'为防止渣男泛滥，一天最多可离婚{daily_limits["rst"]}次',
+            at_sender=True)
     limiters['rst'].increase(f"{user_id}_{group_id}")
 
     # 删除用户的老婆信息
