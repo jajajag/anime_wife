@@ -1008,7 +1008,7 @@ async def wife_atlas(bot, ev: CQEvent):
         col_index = index % COL_NUM
         # Open image
         image_name = os.path.join(imgpath, wife_name)
-        # Save the image to cache
+        # Save the processed 80*80 image to cache
         if image_name not in img_cache:
             sign_image = Image.open(image_name)
             # 图片被缩放到80x80像素，并应用抗锯齿算法
@@ -1017,7 +1017,7 @@ async def wife_atlas(bot, ev: CQEvent):
         else:
             sign_image = img_cache[image_name]
         # 如果老婆不在用户解锁的老婆列表中，则转换为灰度图像
-        if wife_name not in unique_wives:
+        if wife_name.split('.')[0] not in unique_wives:
             sign_image = sign_image.convert('L')
         base_img.paste(sign_image, (
             30 + col_index * 80 + (col_index - 1) * 10,
