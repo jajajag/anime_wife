@@ -950,7 +950,7 @@ COL_NUM = 10
 # 老婆图鉴
 # Modified from https://github.com/Rlezzo/WifeGacha/blob/master/main.py
 @sv.on_rex(r'^(老婆图鉴)|(老婆图鉴)$')
-async def atlas(bot, ev: CQEvent):
+async def wife_atlas(bot, ev: CQEvent):
     # 获取QQ群、群用户QQ信息
     group_id = ev.group_id
     user_id = ev.user_id
@@ -962,11 +962,12 @@ async def atlas(bot, ev: CQEvent):
             target_id = int(seg.data['qq'])
             break
 
-    # 检查消息内容是否为空
-    if (target_id is None) and ev.message.extract_plain_text().strip() == "":
-        target_id = user_id
-    elif target_id is None:
-        return
+    # 获取用户昵称
+    user_id = target_id if target_id else user_id
+    member_info = await bot.get_group_member_info(
+            self_id=ev.self_id, group_id=ev.group_id, user_id=user_id)
+    user_name = member_info['card'] or member_info['nickname'] \
+            or member_info['user_id'] or '未找到对方id'
 
     # Open db
     cursor, conn = open_db_history()
@@ -999,6 +1000,7 @@ async def atlas(bot, ev: CQEvent):
                        Image.ANTIALIAS)
     # 初始化行索引偏移和行偏移:
     row_index_offset, row_offset = 0, 0
+
     # 卡片文件名列表:
     for index, wife_name in enumerate(wives_names):
         row_index = index // COL_NUM + row_index_offset
@@ -1014,14 +1016,17 @@ async def atlas(bot, ev: CQEvent):
         base_img.paste(sign_image, (
             30 + col_index * 80 + (col_index - 1) * 10,
             row_offset + 40 + row_index * 80 + (row_index - 1) * 10))
+
     row_offset += 30
     buf = BytesIO()
     base_img = base.convert('RGB')
     base_img.save(buf, format='JPEG')
     base64_str = f'base64://{base64.b64encode(buf.getvalue()).decode()}'
-    messages.append(f'[CQ:image,file={base64_str}]')
-    messages.append(f'图鉴完成度: {drawn_wives_count} / {total_wives_count}')
-    await bot.send(ev, '\n'.join(messages))
+    messages = f'@{user_name}的老婆图鉴：'
+    messages += f'\n[CQ:image,file={base64_str}]'
+    messages += f'\n图鉴完成度: {drawn_wives_count} / {total_wives_count}'
+
+    await bot.send(ev, messages, at_sender=False)
 
 
 @sv.on_fullmatch('离婚')
