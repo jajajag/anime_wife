@@ -1054,4 +1054,4 @@ async def reset_wife(bot, ev: CQEvent):
     wife_name = wife_name.split('.')[0]
     write_group_config(group_id, user_id, None, None, config)
 
-    bot.send(ev, f'你与{wife_name}解除婚姻成功', at_sender=True)
+    await bot.send(ev, f'你与{wife_name}解除婚姻成功', at_sender=True)
