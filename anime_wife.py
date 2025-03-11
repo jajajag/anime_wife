@@ -529,7 +529,7 @@ async def ntr_wife_helper(bot, ev: CQEvent, ntr_back=False):
     if not ntr_back and not limiters['ntr'].check(f"{user_id}_{group_id}"):
         await bot.finish(ev,
             f'为防止牛头人泛滥，一天最多可牛{daily_limits["ntr"]}次（无保底）',
-            ntr_max_notice, at_sender=True)
+            at_sender=True)
     # JAG: Check ntr_back limit
     if ntr_back and daily_limits['ntr'] \
             - limiters['ntr'].get_num(f"{user_id}_{group_id}") < 2:
