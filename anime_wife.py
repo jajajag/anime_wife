@@ -1185,7 +1185,7 @@ async def mate_wife(bot, ev: CQEvent):
             await bot.finish(ev, '你还没有这位老婆哦，先去解锁图鉴吧！',
                              at_sender=True)
         if daily_limits["mate"] - limiters["mate"].get_num(
-                f"{user_id}_{group_id}") <= 2:
+                f"{user_id}_{group_id}") < 2:
             await bot.finish(ev, f'你需要2条命来触发寝取', at_sender=True)
         limiters['mate'].increase(f"{user_id}_{group_id}", 2)
     # JAG: If mating own wife
