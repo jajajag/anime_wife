@@ -1133,6 +1133,15 @@ async def divorce_wife(bot, ev: CQEvent):
         await bot.finish(ev,
             f'为防止渣男泛滥，一天最多可离婚{daily_limits["div"]}次',
             at_sender=True)
+    # 检查发起者或目标者是否已经在任何交换中
+    if not exchange_manager.is_eligible_for_exchange(
+            group_id, user_id, user_id):
+        await bot.finish(ev, '双方有人正在进行换妻play中，请稍后再试',
+                       at_sender=True)
+    # 满足交换条件，添加进交换请求列表中
+    exchange_manager.insert_exchange_request(group_id, user_id, user_id)
+
+    # JAG: Start divorce
     limiters['div'].increase(f"{user_id}_{group_id}")
 
     # 删除用户的老婆信息
@@ -1145,6 +1154,8 @@ async def divorce_wife(bot, ev: CQEvent):
     write_db_history('divorce', user_id, 0, group_id, wife_name, today)
 
     await bot.send(ev, f'你与{wife_name}解除婚姻成功', at_sender=True)
+    # 清除交换请求锁
+    exchange_manager.remove_exchange_request(group_id, user_id, user_id)
 
 
 @sv.on_rex(r'^(日老婆)|(日老婆)$')
