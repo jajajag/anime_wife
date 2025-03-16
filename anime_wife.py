@@ -1196,7 +1196,7 @@ async def mate_wife(bot, ev: CQEvent):
             await bot.finish(ev, '你还没有这位老婆哦，先去解锁图鉴吧！',
                              at_sender=True)
         # JAG: Need to check mate limit first otherwise there will be a bug
-        if limiters['mate'].check(f"{user_id}_{group_id}") \
+        if not limiters['mate'].check(f"{user_id}_{group_id}") \
                 and daily_limits["mate"] - limiters["mate"].get_num(
                 f"{user_id}_{group_id}") < 2:
             await bot.finish(ev, f'你需要2条命来触发寝取', at_sender=True)
