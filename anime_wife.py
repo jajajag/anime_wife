@@ -1206,7 +1206,7 @@ async def mate_wife(bot, ev: CQEvent):
                 self_id=ev.self_id, group_id=ev.group_id, user_id=target_id)
         nick_name = member_info['card'] or member_info['nickname'] \
                 or member_info['user_id'] or '未找到对方id'
-        await bot.send(ev, f'你瞒着{str(nick_name)}偷偷与{wife_name}进行了深入交流，好感度+1', at_sender=True)
+        await bot.send(ev, f'你消耗2条命，瞒着{str(nick_name)}偷偷与{wife_name}进行了深入交流，好感度+1', at_sender=True)
     else:
         await bot.send(ev, f'你与{wife_name}进行了深入交流，好感度+1', 
                        at_sender=True)
