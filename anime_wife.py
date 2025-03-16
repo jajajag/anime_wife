@@ -16,6 +16,7 @@ sv_help = '''
 [换老婆] @某人 + 交换老婆(5次/日)
 [牛老婆] 2/3概率牛到别人老婆(1次/日)
 [查老婆] 加@某人可以查别人老婆(5次/日)
+[日老婆] 消耗2条命可以提高和别人老婆的好感度
 [离婚] 和二次元老婆离婚(1次/日)
 [跟你爆了] 消耗2条命抢回自己被牛走的老婆，且不补偿对方次数
 [复活吧我的爱人] 复活上一次被牛走的老婆
@@ -49,7 +50,7 @@ daily_limits = {
     'ex': 5,  # 交换老婆
     'sc': 5,  # 查老婆
     'div': 1,  # 离婚
-    'mate': 1 # 日老婆
+    'mate': 2 # 日老婆
 }
 limiters = {key: DailyNumberLimiter(v) for key, v in daily_limits.items()}
 
@@ -709,10 +710,8 @@ async def search_wife(bot, ev: CQEvent):
             target_id = int(seg.data['qq'])
             break
 
-    # JAG: Check if there is a target
-    is_target = target_id is not None
     # JAG: Check search limit if the user is querying other's wife
-    if is_target:
+    if target_id:
         if not limiters['sc'].check(f"{ev.user_id}_{group_id}"):
             await bot.finish(ev,
                 f'已达到每日查询上限（{daily_limits["sc"]}次）', at_sender=True)
@@ -747,9 +746,11 @@ async def search_wife(bot, ev: CQEvent):
     try:
         # 尝试读取老婆图片，并添加到结果中
         wifeimg = R.img(f'wife/{wife_name}').cqcode
-        # JAG: Check if the wife is new if the user is querying other's wife
-        if is_target:
-            result += str(wifeimg) + check_new(group_id, ev.user_id, wife_name)
+        # JAG: Show new info if the wife is new
+        is_new = check_new(group_id, ev.user_id, wife_name)
+        if is_new:
+            result += str(wifeimg) + is_new
+        # Otherwise, show mate info
         else:
             result += str(wifeimg) + check_mate(group_id, ev.user_id, wife_name)
     except Exception as e:
@@ -1151,30 +1152,61 @@ async def mate_wife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQid
     group_id = ev.group_id
     user_id = ev.user_id
+    # JAG: Initialize target_id and is_target
+    target_id = user_id
+    is_target = False
     # 获取今天的日期，转换为字符串格式
     today = str(datetime.date.today())
     # 载入群组信息
     config = load_group_config(group_id)
 
+    for seg in ev.message:
+        if seg.type == 'at' and seg.data['qq'] != 'all':
+            target_id = int(seg.data['qq'])
+            is_target = True
+            break
+
     # Regular checks, the same as in search_wife()
     if config is None:
         await bot.finish(ev, '没有找到本群婚姻登记信息', at_sender=True)
-    if str(user_id) not in config:
+    if str(target_id) not in config:
         await bot.finish(ev, '未找到老婆信息！', at_sender=True)
-    if config[str(user_id)][1] != today:
-        await bot.finish(ev, '你的老婆已过期', at_sender=True)
-    # JAG: Check reset limit
-    if not limiters['mate'].check(f"{user_id}_{group_id}"):
-        await bot.finish(ev,
-            f'劲酒虽好，可不要贪杯哦。一天最多可日{daily_limits["mate"]}次',
-            at_sender=True)
-    limiters['mate'].increase(f"{user_id}_{group_id}")
+    
+    if config[str(target_id)][1] != today:
+        await bot.finish(ev, '该老婆已过期', at_sender=True)
 
     # Get wife name
-    wife_name = config[str(user_id)][0]
+    wife_name = config[str(target_id)][0]
     wife_name = wife_name.split('.')[0]
-    # JAG: Write mate history to db
-    write_db_history('mate', user_id, 0, group_id, wife_name, today)
 
-    await bot.send(ev, f'你与{wife_name}进行了深入交流，好感度+1', 
-                   at_sender=True)
+    # JAG: If mating someone else's wife
+    if is_target:
+        if check_new(group_id, user_id, wife_name):
+            await bot.finish(ev, '你还没有这位老婆哦，先去解锁图鉴吧！',
+                             at_sender=True)
+        if daily_limits["mate"] - limiters["mate"].get_num(
+                f"{user_id}_{group_id}") <= 2:
+            await bot.finish(ev, f'你需要2条命来触发寝取', at_sender=True)
+        limiters['mate'].increase(f"{user_id}_{group_id}", 2)
+    # JAG: If mating own wife
+    else:
+        # Check mate limit
+        if not limiters['mate'].check(f"{user_id}_{group_id}"):
+            await bot.finish(ev,
+                f'劲酒虽好，可不要贪杯哦。一天最多可日{daily_limits["mate"]}次',
+                at_sender=True)
+        limiters['mate'].increase(f"{user_id}_{group_id}")
+
+    # JAG: Write mate history to db
+    write_db_history('mate', user_id, target_id, group_id, wife_name, today)
+
+    if is_target:
+        # Find target's name
+        member_info = await bot.get_group_member_info(
+                self_id=ev.self_id, group_id=ev.group_id, user_id=target_id)
+        nick_name = member_info['card'] or member_info['nickname'] \
+                or member_info['user_id'] or '未找到对方id'
+        await bot.send(ev, f'你瞒着{str(nick_name)}偷偷与{wife_name}进行了深入交流，好感度+1', at_sender=True)
+    else:
+        await bot.send(ev, f'你与{wife_name}进行了深入交流，好感度+1', 
+                       at_sender=True)
