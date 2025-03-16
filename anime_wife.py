@@ -1147,7 +1147,7 @@ async def divorce_wife(bot, ev: CQEvent):
     await bot.send(ev, f'你与{wife_name}解除婚姻成功', at_sender=True)
 
 
-@sv.on_fullmatch('日老婆')
+@sv.on_rex(r'^(日老婆)|(日老婆)$')
 async def mate_wife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQid
     group_id = ev.group_id
