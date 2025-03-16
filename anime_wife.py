@@ -1187,10 +1187,8 @@ async def mate_wife(bot, ev: CQEvent):
         if daily_limits["mate"] - limiters["mate"].get_num(
                 f"{user_id}_{group_id}") < 2:
             await bot.finish(ev, f'你需要2条命来触发寝取', at_sender=True)
-        # JAG: It seems to be a bug, we need to reset if first.
-        # Otherwise there will be two identical limiters
-        limiters['mate'].reset(f"{user_id}_{group_id}")
-        limiters['mate'].increase(f"{user_id}_{group_id}", 2)
+        limiters['mate'].increase(f"{user_id}_{group_id}")
+        limiters['mate'].increase(f"{user_id}_{group_id}")
     # JAG: If mating own wife
     else:
         # Check mate limit
