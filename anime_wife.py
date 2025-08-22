@@ -389,9 +389,12 @@ async def exchange_wife(bot, ev: CQEvent):
 
     # 满足交换条件，添加进交换请求列表中
     exchange_manager.insert_exchange_request(group_id, user_id, target_id)
-    # 发送交换请求
-    await bot.send(ev, f'[CQ:at,qq={target_id}] 用户 [CQ:at,qq={user_id}] 想要和你交换老婆，是否同意？\n如果同意(拒绝)请在60秒内发送“同意(拒绝)”', 
-                   at_sender=False)
+    # 发送交换请求（此处可能会发不出去导致交换请求无法解锁）
+    try:
+        await bot.send(ev, f'[CQ:at,qq={target_id}] 用户 [CQ:at,qq={user_id}] 想要和你交换老婆，是否同意？\n如果同意(拒绝)请在60秒内发送“同意(拒绝)”', 
+                       at_sender=False)
+    except Exception as e:
+        hoshino.logger.error(f'交换老婆时发生错误{type(e)}')
     # 启动定时器，60秒后如果没有收到回应则自动清除交换请求
     exchange_task = asyncio.create_task(exchange_manager.handle_timeout(
         bot, ev, group_id, user_id, target_id))
@@ -1223,3 +1226,4 @@ async def mate_wife(bot, ev: CQEvent):
     else:
         await bot.send(ev, f'你与{wife_name}进行了深入交流，好感度+1', 
                        at_sender=True)
+
