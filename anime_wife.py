@@ -7,6 +7,7 @@ from hoshino.config import RES_DIR
 from hoshino.typing import CQEvent
 from hoshino.util import DailyNumberLimiter
 from html import unescape
+from noise import add_invisible_noise_content
 from io import BytesIO
 from PIL import Image
 
@@ -40,6 +41,8 @@ sv = Service(
 
 # 图片路径
 imgpath = os.path.join(os.path.expanduser(RES_DIR), 'img', 'wife')
+# 待审查的图片文件夹
+imgpath_review = os.path.join(os.path.expanduser(RES_DIR), 'img', 'wife_review')
 
 # 牛老婆的成功率
 ntr_possibility = 2.0 / 3
@@ -212,9 +215,18 @@ async def download_async(url: str, name: str):
     content = await resp.content
     try:
         extension = filetype.guess_mime(content).split('/')[1]
+        # 添加不可见噪声
+        content = add_invisible_noise_content(content)
+        # 经过上述转化固定是jpg格式
+        extension = 'jpg'
     except:
         raise ValueError('不是有效文件类型')
-    abs_path = os.path.join(imgpath, f'{name}.{extension}')
+    abs_path = os.path.join(imgpath_review, f'{name}.{extension}')
+    i = 0
+    # 如果文件名重复则重命名
+    while os.path.exists(abs_path):
+        i += 1
+        abs_path = os.path.join(imgpath_review, f"{name}_{i}.{extension}")
     with open(abs_path, 'wb') as f:
         f.write(content)
 
@@ -1226,4 +1238,5 @@ async def mate_wife(bot, ev: CQEvent):
     else:
         await bot.send(ev, f'你与{wife_name}进行了深入交流，好感度+1', 
                        at_sender=True)
+
 
