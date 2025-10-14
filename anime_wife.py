@@ -18,6 +18,7 @@ sv_help = '''
 [牛老婆] 2/3概率牛到别人老婆(1次/日)
 [查老婆] 加@某人可以查别人老婆(5次/日)
 [日老婆] 消耗2条命可以提高和别人老婆的好感度
+[添加老婆+人物名称+图片] 每天可以添加一次人物(会审查)
 [离婚] 和二次元老婆离婚(1次/日)
 [跟你爆了] 消耗2条命抢回自己被牛走的老婆，且不补偿对方次数
 [复活吧我的爱人] 复活上一次被牛走的老婆
@@ -237,8 +238,8 @@ async def add_wife(bot,ev:CQEvent):
     user_id = ev.user_id
     # 此注释的代码是仅限bot超级管理员使用，
     # 有需可启用并将下面判断权限的代码注释掉
-    if user_id not in hoshino.config.SUPERUSERS:
-        return
+    #if user_id not in hoshino.config.SUPERUSERS:
+    #    return
 
     # 判断权限，只有用户为群管理员或为bot设置的超级管理员才能使用
     # u_priv = priv.get_user_priv(ev)
@@ -1238,5 +1239,6 @@ async def mate_wife(bot, ev: CQEvent):
     else:
         await bot.send(ev, f'你与{wife_name}进行了深入交流，好感度+1', 
                        at_sender=True)
+
 
 
