@@ -1,10 +1,11 @@
-import os
-from PIL import Image
 import numpy as np
+import os
+from io import BytesIO
+from PIL import Image
 
-def add_invisible_noise(image_path, output_path, noise_level=5):
+def add_invisible_noise_content(content, noise_level=5):
     # 打开图片并转换为数组
-    image = Image.open(image_path)
+    image = Image.open(BytesIO(content))
     
     # 如果图片是 RGBA 模式，则转换为 RGB
     if image.mode == 'RGBA':
@@ -19,9 +20,20 @@ def add_invisible_noise(image_path, output_path, noise_level=5):
     noisy_image_array = image_array + noise
     noisy_image_array = np.clip(noisy_image_array, 0, 255).astype('uint8')
     
-    # 将数组转换回图片并保存
+    # 将数组转换回图片
     noisy_image = Image.fromarray(noisy_image_array)
-    noisy_image.save(output_path, quality=90)  # 调整保存质量
+    out_buf = BytesIO()
+    noisy_image.save(out_buf, format=image.format or 'JPEG', quality=90) # 调整保存质量
+    
+    return out_buf.getvalue()
+
+def add_invisible_noise(image_path, output_path, noise_level=5):
+    with open(image_path, 'rb') as f:
+        content = f.read()
+    noisy_content = add_invisible_noise_content(content, noise_level)
+    with open(output_path, 'wb') as f:
+        f.write(noisy_content)
+    # 保存图片
     print(f"图片已处理并保存到 {output_path}")
 
 def process_images_in_directory(input_dir, output_dir, noise_level=5):
