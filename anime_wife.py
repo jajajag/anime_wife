@@ -18,7 +18,7 @@ sv_help = '''
 [牛老婆] 2/3概率牛到别人老婆(1次/日)
 [查老婆] 加@某人可以查别人老婆(5次/日)
 [日老婆] 消耗2条命可以提高和别人老婆的好感度
-[添加老婆+人物名称+图片] 添加老婆到待审查图库(1次/日)
+[加老婆+老婆名+图片] 添加老婆到待审查图库(1次/日)
 [离婚] 和二次元老婆离婚(1次/日)
 [跟你爆了] 消耗2条命抢回自己被牛走的老婆，且不补偿对方次数
 [复活吧我的爱人] 复活上一次被牛走的老婆
@@ -232,7 +232,7 @@ async def download_async(url: str, name: str):
         f.write(content)
 
 
-@sv.on_rex(r'^(添?加老婆)|(添?加老婆)$')
+@sv.on_rex(r'^添?加老婆')
 async def add_wife(bot,ev:CQEvent):
     # 获取QQ信息
     user_id = ev.user_id
@@ -252,6 +252,7 @@ async def add_wife(bot,ev:CQEvent):
             at_sender=True)
     # 提取老婆的名字
     name = ev.message.extract_plain_text().strip()
+    name = name[name.find('加老婆') + 3:]
     # 获得图片信息
     #ret = re.search(r"\[CQ:image,file=(.*)?,url=(.*)\]", str(ev.message))
     ret = re.search(r"\[CQ:image,.*?url=([^,\]]+).*?\]", str(ev.message))
@@ -1240,6 +1241,7 @@ async def mate_wife(bot, ev: CQEvent):
     else:
         await bot.send(ev, f'你与{wife_name}进行了深入交流，好感度+1', 
                        at_sender=True)
+
 
 
 
