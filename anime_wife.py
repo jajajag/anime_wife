@@ -253,12 +253,13 @@ async def add_wife(bot,ev:CQEvent):
     # 提取老婆的名字
     name = ev.message.extract_plain_text().strip()
     # 获得图片信息
-    ret = re.search(r"\[CQ:image,file=(.*)?,url=(.*)\]", str(ev.message))
+    #ret = re.search(r"\[CQ:image,file=(.*)?,url=(.*)\]", str(ev.message))
+    ret = re.search(r"\[CQ:image,.*?url=([^,\]]+).*?\]", str(ev.message))
     if not ret:
         # 未获得图片信息
         await bot.finish(ev,'请附带二次元老婆图片~')
     # 获取下载url
-    url = ret[2]
+    url = ret[1]
     # 下载图片保存到本地
     await download_async(url, name)
     # 如果不是超级管理员，增加用户的添加老婆次数（管理员可一天增加多次）
@@ -1239,6 +1240,7 @@ async def mate_wife(bot, ev: CQEvent):
     else:
         await bot.send(ev, f'你与{wife_name}进行了深入交流，好感度+1', 
                        at_sender=True)
+
 
 
 
