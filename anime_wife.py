@@ -18,7 +18,7 @@ sv_help = '''
 [牛老婆] 2/3概率牛到别人老婆(1次/日)
 [查老婆] 加@某人可以查别人老婆(5次/日)
 [日老婆] 消耗2条命可以提高和别人老婆的好感度
-[添加老婆+人物名称+图片] 每天可以添加一次人物(会审查)
+[添加老婆+人物名称+图片] 添加老婆到待审查图库(1次/日)
 [离婚] 和二次元老婆离婚(1次/日)
 [跟你爆了] 消耗2条命抢回自己被牛走的老婆，且不补偿对方次数
 [复活吧我的爱人] 复活上一次被牛走的老婆
@@ -49,7 +49,7 @@ imgpath_review = os.path.join(os.path.expanduser(RES_DIR), 'img', 'wife_review')
 ntr_possibility = 2.0 / 3
 # 每日次数限制
 daily_limits = {
-    'add': 0, # 添加老婆
+    'add': 1, # 添加老婆
     'ntr': 1, # 牛老婆
     'ex': 5,  # 交换老婆
     'sc': 5,  # 查老婆
@@ -1239,6 +1239,7 @@ async def mate_wife(bot, ev: CQEvent):
     else:
         await bot.send(ev, f'你与{wife_name}进行了深入交流，好感度+1', 
                        at_sender=True)
+
 
 
 
