@@ -7,7 +7,7 @@ from hoshino.config import RES_DIR
 from hoshino.typing import CQEvent
 from hoshino.util import DailyNumberLimiter
 from html import unescape
-from noise import add_invisible_noise_content
+from .noise import add_invisible_noise_content
 from io import BytesIO
 from PIL import Image
 
@@ -1239,6 +1239,7 @@ async def mate_wife(bot, ev: CQEvent):
     else:
         await bot.send(ev, f'你与{wife_name}进行了深入交流，好感度+1', 
                        at_sender=True)
+
 
 
 
