@@ -266,7 +266,7 @@ async def add_wife(bot,ev:CQEvent):
     # 如果不是超级管理员，增加用户的添加老婆次数（管理员可一天增加多次）
     if user_id not in hoshino.config.SUPERUSERS:
         limiters['add'].increase(user_id)
-    await bot.send(ev,'信息已增加~')
+    await bot.send(ev,'图片已提交，审核中~')
 
 
 ############################## 下面是交换老婆功能 ##############################
@@ -1241,6 +1241,7 @@ async def mate_wife(bot, ev: CQEvent):
     else:
         await bot.send(ev, f'你与{wife_name}进行了深入交流，好感度+1', 
                        at_sender=True)
+
 
 
 
