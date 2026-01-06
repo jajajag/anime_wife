@@ -194,17 +194,21 @@ async def animewife(bot, ev: CQEvent):
     # 分割文件名和扩展名，只取图片名返回给用户
     name = wife_name.split('.')
     # 生成返回结果
-    result = f'你今天的二次元老婆是{name[0]}哒~\n'
+    result = result_raw = f'你今天的二次元老婆是{name[0]}哒~\n'
     try:
         # 尝试读取老婆图片，并添加到结果中
         wifeimg = R.img(f'wife/{wife_name}').cqcode
         result += str(wifeimg) + result_new
+        result_raw += result_new
     except Exception as e:
         hoshino.logger.error(f'读取老婆图片时发生错误{type(e)}')
     # 将选择的老婆信息写入群组配置
-    write_group_config(group_id,user_id,wife_name,today,config)
-    # 发送消息
-    await bot.send(ev,result,at_sender=True)
+    write_group_config(group_id, user_id, wife_name, today, config)
+    # 发送消息（图片有可能发不出去）
+    try:
+        await bot.send(ev, result, at_sender=True)
+    except Exception as e:
+        await bot.send(ev, result_raw, at_sender=True)
     
 
 #下载图片
@@ -759,7 +763,7 @@ async def search_wife(bot, ev: CQEvent):
             self_id=ev.self_id, group_id=ev.group_id, user_id=target_id)
     nick_name = member_info['card'] or member_info['nickname'] \
             or member_info['user_id'] or '未找到对方id'
-    result = f'{str(nick_name)}的二次元老婆是{name[0]}哒~\n'
+    result = result_raw = f'{str(nick_name)}的二次元老婆是{name[0]}哒~\n'
 
     try:
         # 尝试读取老婆图片，并添加到结果中
@@ -768,15 +772,18 @@ async def search_wife(bot, ev: CQEvent):
         is_new = check_new(group_id, ev.user_id, wife_name)
         if is_new:
             result += str(wifeimg) + is_new
+            result_raw += is_new
         # Otherwise, show mate info
         else:
             result += str(wifeimg) + check_mate(group_id, ev.user_id, wife_name)
     except Exception as e:
         hoshino.logger.error(f'读取老婆图片时发生错误{type(e)}')
         await bot.finish(ev, '读取老婆图片时发生错误', at_sender=True)
-
-    # 发送消息
-    await bot.send(ev,result,at_sender=True)
+    # 发送消息（图片有可能发不出去）
+    try:
+        await bot.send(ev, result, at_sender=True)
+    except Exception as e:
+        await bot.send(ev, result_raw, at_sender=True)
 
 
 # JAG: 查询老婆历史记录
@@ -1241,6 +1248,7 @@ async def mate_wife(bot, ev: CQEvent):
     else:
         await bot.send(ev, f'你与{wife_name}进行了深入交流，好感度+1', 
                        at_sender=True)
+
 
 
 
