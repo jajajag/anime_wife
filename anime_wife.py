@@ -356,7 +356,7 @@ class ExchangeManager:
 exchange_manager = ExchangeManager()
 
 
-@sv.on_rex(r'^(交?换老婆)|(交?换老婆)$')
+@sv.on_rex(r'^交?换老婆|交?换老婆$')
 async def exchange_wife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQ信息
     group_id = ev.group_id
@@ -502,8 +502,8 @@ async def ex_wife_reply(bot, ev: CQEvent):
 
 
 # 重置牛老婆次数限制
-#@sv.on_rex(r'^(重置牛老婆)|(重置牛老婆)$')
-@sv.on_rex(r'^(重置(牛老婆|日老婆|离婚))$|(重置(牛老婆|日老婆|离婚))$')
+#@sv.on_rex(r'^重置牛老婆|重置牛老婆$')
+@sv.on_rex(r'^重置(牛老婆|日老婆|离婚)|重置(牛老婆|日老婆|离婚)$')
 async def reset_ntr_wife(bot, ev: CQEvent):
     # 获取QQ信息
     user_id = ev.user_id
@@ -657,13 +657,13 @@ async def ntr_wife_helper(bot, ev: CQEvent, ntr_back=False):
 
 
 # JAG: 牛老婆
-@sv.on_rex(r'^(牛老婆)|(牛老婆)$')
+@sv.on_rex(r'^牛老婆|牛老婆$')
 async def ntr_wife(bot, ev: CQEvent):
     await ntr_wife_helper(bot, ev, ntr_back=False)
 
 
 # JAG: 牛回本属于你的老婆
-@sv.on_rex(r'^((md|妈的)?(和|跟)你爆了)|((md|妈的)?(和|跟)你爆了)$')
+@sv.on_rex(r'^(md|妈的)?(和|跟)你爆了|(md|妈的)?(和|跟)你爆了$')
 async def ntr_back_wife(bot, ev: CQEvent):
     await ntr_wife_helper(bot, ev, ntr_back=True)
 
@@ -717,7 +717,7 @@ async def switch_ntr(bot, ev: CQEvent):
     
 
 ########### 查看别人老婆 ##############
-@sv.on_rex(r'^(查老婆)|(查老婆)$')
+@sv.on_rex(r'^查老婆|查老婆$')
 async def search_wife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQ信息
     load_ntr_statuses()
@@ -787,7 +787,7 @@ async def search_wife(bot, ev: CQEvent):
 
 
 # JAG: 查询老婆历史记录
-@sv.on_rex(r'^(老婆档案)|(老婆档案)$')
+@sv.on_rex(r'^老婆档案|老婆档案$')
 async def wife_stats(bot, ev: CQEvent):
     group_id = ev.group_id
     user_id = ev.user_id
@@ -1051,7 +1051,7 @@ img_cache = {}
 
 # 老婆图鉴
 # Modified from https://github.com/Rlezzo/WifeGacha/blob/master/main.py
-@sv.on_rex(r'^(老婆图鉴)|(老婆图鉴)$')
+@sv.on_rex(r'^老婆图鉴|老婆图鉴$')
 async def wife_atlas(bot, ev: CQEvent):
     # 获取QQ群、群用户QQ信息
     group_id = ev.group_id
@@ -1183,7 +1183,7 @@ async def divorce_wife(bot, ev: CQEvent):
     exchange_manager.remove_exchange_request(group_id, user_id, user_id)
 
 
-@sv.on_rex(r'^(日老婆)|(日老婆)$')
+@sv.on_rex(r'^日老婆|(?<!今日)日老婆$')
 async def mate_wife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQid
     group_id = ev.group_id
@@ -1248,12 +1248,3 @@ async def mate_wife(bot, ev: CQEvent):
     else:
         await bot.send(ev, f'你与{wife_name}进行了深入交流，好感度+1', 
                        at_sender=True)
-
-
-
-
-
-
-
-
-
