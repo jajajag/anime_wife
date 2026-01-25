@@ -1183,7 +1183,7 @@ async def divorce_wife(bot, ev: CQEvent):
     exchange_manager.remove_exchange_request(group_id, user_id, user_id)
 
 
-@sv.on_rex(r'^日老婆|(?<!今日)日老婆$')
+@sv.on_rex(r'^日老婆|(?<!今)日老婆$')
 async def mate_wife(bot, ev: CQEvent):
     # 获取QQ群、群用户QQid
     group_id = ev.group_id
@@ -1248,3 +1248,4 @@ async def mate_wife(bot, ev: CQEvent):
     else:
         await bot.send(ev, f'你与{wife_name}进行了深入交流，好感度+1', 
                        at_sender=True)
+
