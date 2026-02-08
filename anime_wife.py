@@ -510,7 +510,7 @@ async def reset_ntr_wife(bot, ev: CQEvent):
     group_id = ev.group_id
     # JAG: Get keyword from regex match
     match = ev['match']
-    keyword = match.group(2)
+    keyword = match.group(1)
     # 此注释的代码是仅限bot超级管理员使用，
     # 有需可启用并将下面判断权限的代码注释掉
     if user_id not in hoshino.config.SUPERUSERS:
@@ -1248,4 +1248,5 @@ async def mate_wife(bot, ev: CQEvent):
     else:
         await bot.send(ev, f'你与{wife_name}进行了深入交流，好感度+1', 
                        at_sender=True)
+
 
