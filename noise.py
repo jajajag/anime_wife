@@ -1,57 +1,126 @@
-import numpy as np
+import io
 import os
-from io import BytesIO
-from PIL import Image
+import random
+from PIL import Image, ImageOps
 
-def add_invisible_noise_content(content, noise_level=5):
-    # 打开图片并转换为数组
-    image = Image.open(BytesIO(content))
-    
-    # 如果图片是 RGBA 模式，则转换为 RGB
-    if image.mode == 'RGBA':
-        image = image.convert('RGB')
-    
-    image_array = np.array(image)
-    
-    # 生成随机噪声，范围为[-noise_level, noise_level]
-    noise = np.random.randint(-noise_level, noise_level, image_array.shape, dtype='int16')
-    
-    # 将噪声添加到图像数据，并确保数据范围在[0, 255]
-    noisy_image_array = image_array + noise
-    noisy_image_array = np.clip(noisy_image_array, 0, 255).astype('uint8')
-    
-    # 将数组转换回图片
-    noisy_image = Image.fromarray(noisy_image_array)
-    out_buf = BytesIO()
-    noisy_image.save(out_buf, format=image.format or 'JPEG', quality=90) # 调整保存质量
-    
-    return out_buf.getvalue()
+# ===== 参数 =====
+INPUT_DIR = "wife"
 
-def add_invisible_noise(image_path, output_path, noise_level=5):
-    with open(image_path, 'rb') as f:
-        content = f.read()
-    noisy_content = add_invisible_noise_content(content, noise_level)
-    with open(output_path, 'wb') as f:
-        f.write(noisy_content)
-    # 保存图片
-    print(f"图片已处理并保存到 {output_path}")
+LONG_EDGE = 800          # 长边
+TARGET_KB = 250          # 目标大小
+NOISE_LEVEL = 2          # 0=关闭
+MIN_QUALITY = 60
+MAX_QUALITY = 100
+# =================
 
-def process_images_in_directory(input_dir, output_dir, noise_level=5):
-    # 如果输出目录不存在，则创建它
-    os.makedirs(output_dir, exist_ok=True)
 
-    # 遍历输入目录中的所有文件
-    for filename in os.listdir(input_dir):
-        # 检查文件是否为图片文件
-        if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-            input_path = os.path.join(input_dir, filename)
-            output_path = os.path.join(output_dir, filename)
-            
-            # 对图片添加噪声
-            add_invisible_noise(input_path, output_path, noise_level)
-            print(f"{filename} 已处理完成")
+def add_noise(img, level):
+    if level <= 0:
+        return img
 
-# 使用方法
-input_directory = './wife'   # 替换为包含原图的目录路径
-output_directory = './wife' # 替换为存储添加噪声图像的目录路径
-process_images_in_directory(input_directory, output_directory, noise_level=5)
+    pixels = img.load()
+    w, h = img.size
+
+    for y in range(h):
+        for x in range(w):
+            r, g, b = pixels[x, y]
+            pixels[x, y] = (
+                max(0, min(255, r + random.randint(-level, level))),
+                max(0, min(255, g + random.randint(-level, level))),
+                max(0, min(255, b + random.randint(-level, level))),
+            )
+    return img
+
+
+def resize_keep_ratio(img):
+    w, h = img.size
+
+    if max(w, h) <= LONG_EDGE:
+        return img
+
+    scale = LONG_EDGE / max(w, h)
+
+    return img.resize(
+        (int(w * scale), int(h * scale)),
+        Image.Resampling.LANCZOS,
+    )
+
+
+def compress(img):
+    low = MIN_QUALITY
+    high = MAX_QUALITY
+    best = None
+
+    while low <= high:
+        q = (low + high) // 2
+
+        buf = io.BytesIO()
+        img.save(
+            buf,
+            format="JPEG",
+            quality=q,
+            optimize=True,
+            progressive=True,
+        )
+
+        size = buf.tell() / 1024
+
+        if size <= TARGET_KB:
+            best = buf.getvalue()
+            low = q + 1
+        else:
+            high = q - 1
+
+    if best is None:
+        buf = io.BytesIO()
+        img.save(
+            buf,
+            format="JPEG",
+            quality=MIN_QUALITY,
+            optimize=True,
+            progressive=True,
+        )
+        best = buf.getvalue()
+
+    return best
+
+
+def process(path):
+    img = Image.open(path)
+
+    # 修正EXIF方向
+    img = ImageOps.exif_transpose(img)
+
+    # 去Alpha
+    img = img.convert("RGB")
+
+    img = resize_keep_ratio(img)
+
+    img = add_noise(img, NOISE_LEVEL)
+
+    data = compress(img)
+
+    out = os.path.splitext(path)[0] + ".jpg"
+
+    with open(out, "wb") as f:
+        f.write(data)
+
+    if out != path:
+        os.remove(path)
+
+    print(f"{os.path.basename(out):30s} {len(data)/1024:6.1f} KB")
+
+
+def main():
+    for name in os.listdir(INPUT_DIR):
+        path = os.path.join(INPUT_DIR, name)
+
+        if os.path.isfile(path):
+            try:
+                process(path)
+            except Exception as e:
+                print(name, e)
+
+
+if __name__ == "__main__":
+    main()
