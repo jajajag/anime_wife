@@ -7,7 +7,6 @@ from hoshino.config import RES_DIR
 from hoshino.typing import CQEvent
 from hoshino.util import DailyNumberLimiter
 from html import unescape
-from .noise import add_invisible_noise_content
 from io import BytesIO
 from PIL import Image
 
@@ -221,9 +220,9 @@ async def download_async(url: str, name: str):
     try:
         extension = filetype.guess_mime(content).split('/')[1]
         # 添加不可见噪声
-        content = add_invisible_noise_content(content)
+        #content = add_invisible_noise_content(content)
         # 经过上述转化固定是jpg格式
-        extension = 'jpg'
+        #extension = 'jpg'
     except:
         raise ValueError('不是有效文件类型')
     abs_path = os.path.join(imgpath_review, f'{name}.{extension}')
