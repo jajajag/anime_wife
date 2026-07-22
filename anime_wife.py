@@ -38,11 +38,13 @@ sv = Service(
     help_ = sv_help #帮助说明
 )
 
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # 图片路径
-imgpath = os.path.join(os.path.expanduser(RES_DIR), 'img', 'wife')
+#imgpath = os.path.join(os.path.expanduser(RES_DIR), 'img', 'wife')
+imgpath = os.path.join(BASE_DIR, 'wife')
 # 待审查的图片文件夹
-imgpath_review = os.path.join(os.path.expanduser(RES_DIR), 'img', 'wife_review')
+imgpath_review = os.path.join(BASE_DIR, 'wife_review')
+
 
 # 牛老婆的成功率
 ntr_possibility = 2.0 / 3
