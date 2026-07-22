@@ -7,7 +7,7 @@ from PIL import Image, ImageOps
 INPUT_DIR = "wife"
 
 LONG_EDGE = 800          # 长边
-TARGET_KB = 250          # 目标大小
+TARGET_KB = 500          # 目标大小
 NOISE_LEVEL = 2          # 0=关闭
 MIN_QUALITY = 60
 MAX_QUALITY = 100
