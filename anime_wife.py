@@ -85,6 +85,11 @@ def write_group_config(group_id: str, link_id:str, wife_name:str, date:str,
         json.dump(config, f, ensure_ascii=False)
 
 
+def get_wife_image(name):
+    path = os.path.join(imgpath, name)
+    return f'[CQ:image,file={path}]'
+
+
 def open_db_history():
     # wife_type: gacha, exchange, ntr
     db_name = os.path.join(os.path.dirname(__file__), 'config', f'history.db')
@@ -198,7 +203,8 @@ async def animewife(bot, ev: CQEvent):
     result = result_raw = f'你今天的二次元老婆是{name[0]}哒~\n'
     try:
         # 尝试读取老婆图片，并添加到结果中
-        wifeimg = R.img(f'wife/{wife_name}').cqcode
+        #wifeimg = R.img(f'wife/{wife_name}').cqcode
+        wifeimg = get_wife_image(wife_name)
         result += str(wifeimg) + result_new
         result_raw += result_new
     except Exception as e:
@@ -768,7 +774,8 @@ async def search_wife(bot, ev: CQEvent):
 
     try:
         # 尝试读取老婆图片，并添加到结果中
-        wifeimg = R.img(f'wife/{wife_name}').cqcode
+        #wifeimg = R.img(f'wife/{wife_name}').cqcode
+        wifeimg = get_wife_image(wife_name)
         # JAG: Show new info if the wife is new
         is_new = check_new(group_id, ev.user_id, wife_name)
         if is_new:
