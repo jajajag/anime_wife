@@ -44,6 +44,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 imgpath = os.path.join(BASE_DIR, 'wife')
 # 待审查的图片文件夹
 imgpath_review = os.path.join(BASE_DIR, 'wife_review')
+# 如果不存在则自动创建
+os.makedirs(imgpath_review, exist_ok=True)
 
 
 # 牛老婆的成功率
