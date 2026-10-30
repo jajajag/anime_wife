@@ -89,7 +89,9 @@ def write_group_config(group_id: str, link_id:str, wife_name:str, date:str,
 
 def get_wife_image(name):
     path = os.path.join(imgpath, name)
-    return f'[CQ:image,file={path}]'
+    with open(path, 'rb') as f:
+        image_data = base64.b64encode(f.read()).decode('ascii')
+    return f'[CQ:image,file=base64://{image_data}]'
 
 
 def open_db_history():
